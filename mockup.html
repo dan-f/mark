@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>MOCKUP</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.4/css/bootstrap.min.css" integrity="sha384-2hfp1SzUoho7/TsGGGDaFdsuuDL0LX2hnUp6VkX3CUQ2K4K+xjboZdsXyp4oUHZj" crossorigin="anonymous">
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js" integrity="sha384-THPy051/pYDQGanwU6poAc/hOdQxjnOEXzbT+OuUAFqNqFjL+4IGLBgCJC3ZOShY" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.2.0/js/tether.min.js" integrity="sha384-Plbmg8JY28KFelvJVai01l8WyZzrYWG825m+cZ0eDDS1f7d/js6ikvy1+X+guPIB" crossorigin="anonymous"></script>
+    <script defer src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.4/js/bootstrap.min.js" integrity="sha384-VjEeINv9OSwtWFLAtmc4JCtEJXXBub00gtSnszmspDLCtC0I4z4nqz7rEFbIZLLU" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  </head>
+  <body>
+    <div class="container-fluid">
+
+      <div class="row">
+        <!-- Main content column -->
+        <div class="col-md-9">
+          <!-- Begin title -->
+          <div class="row">
+            <div class="col-xs-12">
+              <h1>Solid Bookmarks</h1>
+            </div>
+          </div>
+          <!-- End title -->
+          <!-- Begin form -->
+          <div class="row">
+            <div class="col-xs-12">
+              <span>Add a bookmark</span>
+              <form>
+                <div class="form-group row">
+                  <label for="title-input" class="col-xs-2 col-form-label">Title:</label>
+                  <div class="col-xs-10">
+                    <input type="text" class="form-control" id="title-input">
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="url-input" class="col-xs-2 col-form-label">URL:</label>
+                  <div class="col-xs-10">
+                    <input type="url" class="form-control" id="url-input">
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="tag-input" class="col-xs-2 col-form-label">Tags:</label>
+                  <div class="col-xs-10">
+                    <input type="text" class="form-control" id="tag-input">
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <label for="comments-textarea" class="col-xs-2 col-form-label">Comments:</label>
+                  <div class="col-xs-10">
+                    <textarea class="form-control" rows="3" id="comments-textarea"></textarea>
+                  </div>
+                </div>
+                <div class="form-group row">
+                  <div class="col-xs-6 col-sm-3">
+                    <button type="submit" class="btn btn-primary">Add Bookmark</button>
+                  </div>
+                  <div class="col-xs-6 col-sm-3">
+                    <button type="cancel" class="btn btn-secondary">Cancel</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+          <!-- End form -->
+          <!-- Begin bookmark list -->
+          <div class="row">
+            <div class="col-xs-12">
+              <ul class="list-group">
+                <li class="list-group-item">
+                  <div class="bookmark-title-row row">
+                    <span class="tag tag-default tag-pill pull-xs-right">Aww</span>
+                    <div class="col-xs-12">
+                      <h5><a href="http://www.cutestpaw.com/wp-content/uploads/2011/11/cute-dog1.jpg">Cute dog pic</a></h5>
+                    </div>
+                  </div>
+                  <div class="bookmark-actions row">
+                    <div class="bookmark-edit col-xs-12">
+                      <button type="button" class="btn btn-secondary">Edit</button>
+                    </div>
+                  </div>
+                </li>
+                  <li class="list-group-item">
+                    <div class="bookmark-title-row row">
+                    <span class="tag tag-default tag-pill pull-xs-right">Aww</span>
+                    <div class="col-xs-12">
+                      <h5><a href="https://storage.googleapis.com/imgfave/image_cache/1340146933739482.jpg">Awesome cat pic</a></h5>
+                    </div>
+                  </div>
+                  <div class="bookmark-actions row">
+                    <div class="bookmark-edit col-xs-12">
+                      <button type="button" class="btn btn-secondary">Edit</button>
+                    </div>
+                  </div>
+                </li>
+                <li class="list-group-item">
+                  <div class="bookmark-title-row row">
+                    <div class="col-xs-12">
+                      <span class="tag tag-default tag-pill pull-xs-right">Semantic Web</span>
+                      <span class="tag tag-default tag-pill pull-xs-right">JSON-LD</span>
+                      <h5><a href="http://json-ld.org/spec/latest/json-ld/">JSON-LD spec</a></h5>
+                    </div>
+                  </div>
+                  <div class="bookmark-description row">
+                    <div class="col-xs-12">
+                      <p>This spec is pretty cool. Here's some of my thoughts on it. Blah Blah Blah Blah.</p>
+                    </div>
+                  </div>
+                  <div class="bookmark-actions row">
+                    <div class="bookmark-edit col-xs-12">
+                      <button type="button" class="btn btn-secondary">Edit</button>
+                    </div>
+                  </div>
+                </li>
+                <li class="list-group-item">
+                  <div class="bookmark-title-row row">
+                    <div class="col-xs-12">
+                      <span class="tag tag-default tag-pill pull-xs-right">Semantic Web</span>
+                      <span class="tag tag-default tag-pill pull-xs-right">JSON-LD</span>
+                      <h5><a href="http://json-ld.org/spec/latest/json-ld-framing/">JSON-LD Framing spec</a></h5>
+                    </div>
+                  </div>
+                  <div class="bookmark-actions row">
+                    <div class="bookmark-edit col-xs-12">
+                      <button type="button" class="btn btn-secondary">Edit</button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <!-- End bookmark list -->
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
