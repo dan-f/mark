@@ -7,27 +7,27 @@ export default function BookmarkForm () {
         <span>Add a bookmark</span>
         <form>
           <div className='form-group row'>
-            <label htmlFor='title-input' className='col-xs-2 col-form-label'>Title:</label>
+            <label htmlFor='title-input' className='col-xs-3 col-sm-2 col-form-label'>Title:</label>
             <div className='col-xs-10'>
               <input type='text' className='form-control' id='title-input' />
             </div>
           </div>
           <div className='form-group row'>
-            <label htmlFor='url-input' className='col-xs-2 col-form-label'>URL:</label>
+            <label htmlFor='url-input' className='col-xs-3 col-sm-2 col-form-label'>URL:</label>
             <div className='col-xs-10'>
               <input type='url' className='form-control' id='url-input' />
             </div>
           </div>
           <div className='form-group row'>
-            <label htmlFor='tag-input' className='col-xs-2 col-form-label'>Tags:</label>
+            <label htmlFor='tag-input' className='col-xs-3 col-sm-2 col-form-label'>Tags:</label>
             <div className='col-xs-10'>
               <input type='text' className='form-control' id='tag-input' />
             </div>
           </div>
           <div className='form-group row'>
-            <label htmlFor='comments-textarea' className='col-xs-2 col-form-label'>Comments:</label>
+            <label htmlFor='comments-textarea' className='col-xs-3 col-sm-2 col-form-label'>Comments:</label>
             <div className='col-xs-10'>
-              <textarea className='form-control' rows='3' id='comments-textarea'></textarea>
+              <textarea className='form-control' rows='3' id='comments-textarea' />
             </div>
           </div>
           <div className='form-group row'>
