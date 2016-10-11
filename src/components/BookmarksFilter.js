@@ -19,7 +19,7 @@ export default class BookmarksFilter extends React.Component {
 
   handleRemoveTag (tag) {
     return (event) => {
-      if (event && event.key === ' ') {
+      if (event.type === 'click' || event.key === ' ') {
         this.props.removeTag(tag)
       }
     }
