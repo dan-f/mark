@@ -10,10 +10,9 @@ export default function App () {
       <BookmarksList
         bookmarks={[
           {
-            id: 0,
             title: 'JSON-LD',
             url: 'http://json-ld.org/',
-            tags: [{id: 0, name: 'JSON-LD'}, {id: 1, name: 'Linked Data'}],
+            tags: ['JSON-LD', 'Linked Data'],
             comments: 'JSON-LD home page'
           }
         ]}

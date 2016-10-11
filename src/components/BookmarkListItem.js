@@ -6,7 +6,12 @@ export default function BookmarkListItem ({ title, url, tags, comments }) {
       <div className='bookmark-title-row row'>
         <div className='col-xs-12'>
           {tags.map(tag =>
-            <span key={tag.id} className='tag tag-default tag-pill pull-xs-right'>{tag.name}</span>
+            <span
+              key={tag}
+              className='tag tag-default pull-xs-right'
+              style={{marginLeft: '0.4em'}}>
+              {tag}
+            </span>
           )}
           <h5><a href={url}>{title}</a></h5>
         </div>

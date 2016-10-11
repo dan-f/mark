@@ -9,7 +9,7 @@ export default function BookmarksList ({ bookmarks }) {
         <ul className='list-group'>
           {bookmarks.map(bookmark =>
             <BookmarkListItem
-              key={bookmark.id}
+              key={bookmark.url}
               title={bookmark.title}
               url={bookmark.url}
               tags={bookmark.tags}
