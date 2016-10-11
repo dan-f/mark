@@ -2,12 +2,14 @@ import React from 'react'
 
 import BookmarkListItem from './BookmarkListItem'
 
-export default function BookmarksList ({ bookmarks }) {
+export default function BookmarksList ({ bookmarks, showArchived }) {
   return (
     <div className='row'>
       <div className='col-xs-12'>
         <ul className='list-group'>
-          {bookmarks.map(bookmark =>
+          {bookmarks.filter(
+            bookmark => showArchived ? true : !bookmark.archived
+          ).map(bookmark =>
             <BookmarkListItem
               key={bookmark.url}
               title={bookmark.title}
