@@ -33,10 +33,12 @@
     "babel-preset-react": "^6.16.0",
     "json-loader": "^0.5.4",
     "react-hot-loader": "^3.0.0-beta.5",
+    "standard": "^8.4.0",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.16.2"
   },
   "dependencies": {
+    "immutable": "^3.8.1",
     "react": "^15.3.2",
     "react-dom": "^15.3.2"
   }
