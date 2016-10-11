@@ -6,6 +6,12 @@ export default class BookmarksFilter extends React.Component {
     this.state = {tagFilterInput: ''}
     this.handleTagFilterInput = this.handleTagFilterInput.bind(this)
     this.getMatchingTags = this.getMatchingTags.bind(this)
+    this.handleSelectTag = this.handleSelectTag.bind(this)
+  }
+
+  handleSelectTag (tag) {
+    this.setState({tagFilterInput: ''})
+    this.props.addSelectedTag(tag)
   }
 
   handleTagFilterInput (event) {
@@ -20,7 +26,7 @@ export default class BookmarksFilter extends React.Component {
   }
 
   render () {
-    const {showArchived, handleToggleShowArchived, selectedTags, handleSelectTag} = this.props
+    const {showArchived, handleToggleShowArchived, selectedTags} = this.props
     return (
       <div>
 
@@ -51,10 +57,10 @@ export default class BookmarksFilter extends React.Component {
               <div className='form-group'>
                 <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
                 <div className={'dropdown ' + (this.state.tagFilterInput && this.getMatchingTags().size ? 'open' : '')}>
-                  <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' autoComplete='off' onChange={this.handleTagFilterInput} />
+                  <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={this.state.tagFilterInput} autoComplete='off' onChange={this.handleTagFilterInput} />
                   <div className='dropdown-menu'>
                     {this.getMatchingTags().map(tag =>
-                      <button key={tag} className='dropdown-item' onClick={handleSelectTag(tag)}>{tag}</button>
+                      <button key={tag} className='dropdown-item' onClick={() => this.handleSelectTag(tag)}>{tag}</button>
                     )}
                   </div>
                 </div>
