@@ -7,11 +7,22 @@ export default class BookmarksFilter extends React.Component {
     this.handleTagFilterInput = this.handleTagFilterInput.bind(this)
     this.getMatchingTags = this.getMatchingTags.bind(this)
     this.handleSelectTag = this.handleSelectTag.bind(this)
+    this.handleRemoveTag = this.handleRemoveTag.bind(this)
   }
 
   handleSelectTag (tag) {
-    this.setState({tagFilterInput: ''})
-    this.props.addSelectedTag(tag)
+    return () => {
+      this.setState({tagFilterInput: ''})
+      this.props.addTag(tag)
+    }
+  }
+
+  handleRemoveTag (tag) {
+    return (event) => {
+      if (event && event.key === ' ') {
+        this.props.removeTag(tag)
+      }
+    }
   }
 
   handleTagFilterInput (event) {
@@ -44,7 +55,7 @@ export default class BookmarksFilter extends React.Component {
         <div className='row'>
           <div className='col-xs-12'>
             {selectedTags.map(tag =>
-              <span key={tag} className='tag tag-default' style={{marginLeft: '0.4em'}}>
+              <span key={tag} role='button' tabIndex='0' className='btn tag tag-default' style={{marginLeft: '0.4em'}} onClick={this.handleRemoveTag(tag)} onKeyUp={this.handleRemoveTag(tag)}>
                 {tag}
               </span>
             )}
@@ -60,7 +71,7 @@ export default class BookmarksFilter extends React.Component {
                   <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={this.state.tagFilterInput} autoComplete='off' onChange={this.handleTagFilterInput} />
                   <div className='dropdown-menu'>
                     {this.getMatchingTags().map(tag =>
-                      <button key={tag} className='dropdown-item' onClick={() => this.handleSelectTag(tag)}>{tag}</button>
+                      <button key={tag} className='dropdown-item' onClick={this.handleSelectTag(tag)}>{tag}</button>
                     )}
                   </div>
                 </div>

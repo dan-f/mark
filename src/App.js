@@ -13,7 +13,8 @@ export default class App extends React.Component {
       selectedTags: new Immutable.Set()
     }
     this.handleToggleShowArchived = this.handleToggleShowArchived.bind(this)
-    this.addSelectedTag = this.addSelectedTag.bind(this)
+    this.addTag = this.addTag.bind(this)
+    this.removeTag = this.removeTag.bind(this)
   }
 
   getTags () {
@@ -31,8 +32,12 @@ export default class App extends React.Component {
     this.setState({showArchived: !this.state.showArchived})
   }
 
-  addSelectedTag (tag) {
+  addTag (tag) {
     this.setState({selectedTags: this.state.selectedTags.add(tag)})
+  }
+
+  removeTag (tag) {
+    this.setState({selectedTags: this.state.selectedTags.remove(tag)})
   }
 
   render () {
@@ -44,7 +49,8 @@ export default class App extends React.Component {
           handleToggleShowArchived={this.handleToggleShowArchived}
           tags={this.getTags()}
           selectedTags={this.state.selectedTags}
-          addSelectedTag={this.addSelectedTag}
+          addTag={this.addTag}
+          removeTag={this.removeTag}
         />
         <BookmarksList
           showArchived={this.state.showArchived}
