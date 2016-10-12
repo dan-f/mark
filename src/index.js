@@ -1,31 +1,22 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
+import { Provider } from 'react-redux'
+import { applyMiddleware, createStore } from 'redux'
+import thunkMiddleware from 'redux-thunk'
 
 import App from './App'
+import reducer from './reducer'
 
-const bookmarks = [
-  {
-    title: 'JSON-LD',
-    url: 'http://json-ld.org/',
-    tags: ['JSON-LD', 'Linked Data'],
-    comments: 'JSON-LD home page',
-    archived: false
-  },
-  {
-    title: 'JSON-LD Framing',
-    url: 'http://json-ld.org/spec/latest/json-ld-framing/',
-    tags: ['JSON-LD', 'Linked Data', 'spec'],
-    comments: 'JSON-LD framing spec',
-    archived: true
-  }
-]
+const store = createStore(reducer, applyMiddleware(thunkMiddleware))
 
 function render (AppComponent) {
   ReactDOM.render(
-    <AppContainer>
-      <AppComponent bookmarks={bookmarks} />
-    </AppContainer>,
+    <Provider store={store}>
+      <AppContainer>
+        <AppComponent />
+      </AppContainer>
+    </Provider>,
     document.getElementById('app-container')
   )
 }

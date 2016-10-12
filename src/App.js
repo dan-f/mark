@@ -1,15 +1,17 @@
 import React from 'react'
+import { Router, Route, hashHistory } from 'react-router'
 
-import BookmarkForm from './components/BookmarkForm'
-import FilterableBookmarksList from './components/FilterableBookmarksList'
+import Auth from './containers/Auth'
+import BookmarksLoader from './containers/BookmarksLoader'
 
 export default class App extends React.Component {
   render () {
-    const {bookmarks} = this.props
     return (
       <div>
-        <BookmarkForm />
-        <FilterableBookmarksList bookmarks={bookmarks} />
+        <Router history={hashHistory}>
+          <Route path='/' component={Auth} />
+          <Route path='/bookmarks/:bookmarksUrl' component={BookmarksLoader} />
+        </Router>
       </div>
     )
   }
