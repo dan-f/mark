@@ -37,7 +37,7 @@ export default class BookmarksFilter extends React.Component {
   }
 
   render () {
-    const {showArchived, handleToggleShowArchived, selectedTags} = this.props
+    const {showArchived, toggleShowArchived, selectedTags} = this.props
     return (
       <div>
 
@@ -45,7 +45,7 @@ export default class BookmarksFilter extends React.Component {
           <div className='col-xs-12'>
             <form>
               <label className='form-check-inline'>
-                <input type='checkbox' className='form-check-input' checked={showArchived} onClick={handleToggleShowArchived} />
+                <input type='checkbox' className='form-check-input' checked={showArchived} onClick={toggleShowArchived} />
                 <span>Show archived</span>
               </label>
             </form>
@@ -71,7 +71,7 @@ export default class BookmarksFilter extends React.Component {
                   <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={this.state.tagFilterInput} autoComplete='off' onChange={this.handleTagFilterInput} />
                   <div className='dropdown-menu'>
                     {this.getMatchingTags().map(tag =>
-                      <button key={tag} className='dropdown-item' onClick={this.handleSelectTag(tag)}>{tag}</button>
+                      <button key={tag} type='button' className='dropdown-item' onClick={this.handleSelectTag(tag)}>{tag}</button>
                     )}
                   </div>
                 </div>
