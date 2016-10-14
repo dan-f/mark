@@ -2,6 +2,9 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import * as AuthActions from 'redux-solid-auth/lib/actions'
+import { getProfile } from 'solid-client'
+
+import * as BookmarkActions from '../actions'
 
 class Auth extends React.Component {
   componentDidMount () {
@@ -9,14 +12,18 @@ class Auth extends React.Component {
     const { router } = this.context
     Actions.authenticate()
       .then(axn => {
+        // TODO: clean up this promise in the redux-solid-auth lib
         if (axn.type === 'AUTH_SUCCESS') {
-          console.log('authenticated! webid:', axn.webId)
-          // TODO: more robust way to discover bookmarks resource
-          router.push(`/bookmarks/${encodeURIComponent(axn.webId.replace('card#me', 'bookmarks.ttl'))}`)
+          return getProfile(axn.webId)
         } else {
-          console.log('something bad happened:', axn.error)
+          throw new Error(axn.error)
         }
       })
+      .then(solidProfile => solidProfile.loadTypeRegistry())
+      .then(solidProfile => Actions.maybeInstallAppResources(solidProfile))
+      .then(bookmarksUrl => router.push(`/bookmarks/${encodeURIComponent(bookmarksUrl)}`))
+      // TODO: render an error page
+      .catch(error => console.log(error))
   }
 
   render () {
@@ -26,7 +33,10 @@ class Auth extends React.Component {
 
 function mapDispatchToProps (dispatch) {
   return {
-    Actions: bindActionCreators(AuthActions, dispatch)
+    Actions: {
+      ...bindActionCreators(AuthActions, dispatch),
+      ...bindActionCreators(BookmarkActions, dispatch)
+    }
   }
 }
 Auth.contextTypes = {

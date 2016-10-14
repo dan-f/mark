@@ -3,12 +3,13 @@ import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
 import { Provider } from 'react-redux'
 import { applyMiddleware, createStore } from 'redux'
+import createLogger from 'redux-logger'
 import thunkMiddleware from 'redux-thunk'
 
 import App from './components/App'
 import rootReducer from './reducers'
 
-const store = createStore(rootReducer, applyMiddleware(thunkMiddleware))
+const store = createStore(rootReducer, applyMiddleware(thunkMiddleware, createLogger()))
 
 function render (AppComponent) {
   ReactDOM.render(
