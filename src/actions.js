@@ -1,7 +1,10 @@
-import { web } from 'solid-client'
+import * as Immutable from 'immutable'
+import { rdflib, web } from 'solid-client'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
+
+import { bookmarkModelFactory } from './models'
 
 // Bookmark application install
 
@@ -28,7 +31,6 @@ export function maybeInstallAppResources (solidProfile) {
 export function registerBookmarks (solidProfile) {
   return dispatch => {
     const bookmarksUrl = utils.getBookmarksUrl(solidProfile)
-    console.log('bookmarks url: ', bookmarksUrl)
     if (bookmarksUrl) {
       return Promise.resolve(bookmarksUrl)
     }
@@ -99,14 +101,62 @@ export function createBookmarksResourceFailure (error) {
   }
 }
 
+// Add/save bookmarks
+
+export function saveBookmark (bookmark) {
+  return dispatch => {
+    dispatch(saveBookmarkRequest())
+    return bookmark.save(rdflib, web)
+      .then(savedBookmark => {
+        dispatch(saveBookmarkSuccess(savedBookmark))
+        return savedBookmark
+      })
+      .catch(error => {
+        dispatch(saveBookmarkError(error))
+        throw error
+      })
+  }
+}
+
+export function saveBookmarkRequest () {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_REQUEST
+  }
+}
+
+export function saveBookmarkSuccess (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS,
+    bookmark
+  }
+}
+
+export function saveBookmarkError (error) {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_FAILURE,
+    error
+  }
+}
+
 // Bookmark loading
 
-export function loadBookmarks (url) {
+export function loadBookmarks (url, ownerWebId) {
   return dispatch => {
     dispatch(loadBookmarksRequest(url))
     return web.get(url)
-      .then(solidResponse => dispatch(loadBookmarksSuccess(solidResponse.parsedGraph())))
-      .catch(error => dispatch(loadBookmarksFailure(error)))
+      .then(solidResponse => {
+        const bookmarksGraph = solidResponse.parsedGraph()
+        const bookmarkModel = bookmarkModelFactory(ownerWebId)
+        const bookmarks = Immutable.Set(bookmarksGraph.statements.map(st => st.subject.value))
+          .map(subject => bookmarkModel(bookmarksGraph, subject))
+          .toArray()
+        dispatch(loadBookmarksSuccess(bookmarks))
+        return bookmarksGraph
+      })
+      .catch(error => {
+        dispatch(loadBookmarksFailure(error))
+        throw error
+      })
   }
 }
 
@@ -117,10 +167,10 @@ export function loadBookmarksRequest (url) {
   }
 }
 
-export function loadBookmarksSuccess (graph) {
+export function loadBookmarksSuccess (bookmarks) {
   return {
     type: ActionTypes.BOOKMARKS_LOAD_SUCCESS,
-    graph
+    bookmarks
   }
 }
 

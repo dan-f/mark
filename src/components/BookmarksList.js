@@ -11,9 +11,10 @@ export default class BookmarksList extends React.Component {
   getVisibleBookmarks () {
     const { bookmarks, showArchived, selectedTags } = this.props
     return bookmarks.filter(bookmark => {
-      const canShowBasedOnTag = selectedTags.size ? selectedTags.intersect(bookmark.tags).size > 0 : true
-      const canShowBasedOnArchive = showArchived ? true : !bookmark.archived
-      return canShowBasedOnTag && canShowBasedOnArchive
+      const canShowBasedOnTag = selectedTags.size ? selectedTags.intersect(bookmark.get('tags')).size > 0 : true
+      // const canShowBasedOnArchive = showArchived ? true : !bookmark.any('archived')
+      // return canShowBasedOnTag && canShowBasedOnArchive
+      return canShowBasedOnTag
     })
   }
 
@@ -24,12 +25,12 @@ export default class BookmarksList extends React.Component {
           <ul className='list-group'>
             {this.getVisibleBookmarks().map(bookmark =>
               <BookmarkListItem
-                key={bookmark.url}
-                title={bookmark.title}
-                url={bookmark.url}
-                tags={bookmark.tags}
-                comments={bookmark.comments}
-                />
+                key={bookmark.any('url')}
+                title={bookmark.any('title')}
+                url={bookmark.any('url')}
+                tags={bookmark.get('tags')}
+                comments={bookmark.any('description')}
+              />
             )}
           </ul>
         </div>

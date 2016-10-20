@@ -18,7 +18,7 @@ export default class FilterableBookmarksList extends React.Component {
 
   getTags () {
     return this.props.bookmarks
-      .map(bookmark => bookmark.tags)
+      .map(bookmark => bookmark.get('tags'))
       .reduce((allTags, curTags) => {
         return [...allTags, ...curTags]
       }, [])

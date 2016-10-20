@@ -6,8 +6,9 @@ import * as ActionTypes from './actionTypes'
 function bookmarks (state = [], action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_LOAD_SUCCESS:
-      // TODO: return models
-      return state
+      return action.bookmarks
+    case ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS:
+      return [...state, action.bookmark]
     default:
       return state
   }

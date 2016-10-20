@@ -41,6 +41,7 @@ export default class BookmarksFilter extends React.Component {
     return (
       <div>
 
+        {/*
         <div className='row'>
           <div className='col-xs-12'>
             <form>
@@ -51,6 +52,7 @@ export default class BookmarksFilter extends React.Component {
             </form>
           </div>
         </div>
+        */}
 
         <div className='row'>
           <div className='col-xs-12'>
