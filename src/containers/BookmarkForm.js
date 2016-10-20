@@ -9,20 +9,28 @@ import { bookmarkModelFactory } from '../models'
 export class BookmarkForm extends React.Component {
   constructor (props) {
     super(props)
-    const defaultBookmarkData = {
+    this.state = this.getCleanState()
+    this.handleFormFieldChange = this.handleFormFieldChange.bind(this)
+    this.processTagsInput = this.processTagsInput.bind(this)
+    this.handleSubmit = this.handleSubmit.bind(this)
+    this.handleCancel = this.handleCancel.bind(this)
+  }
+
+  get defaultBookmarkData () {
+    return {
       url: '',
       title: '',
       description: '',
       tags: [],
       archived: false
     }
-    this.state = {
-      bookmarkData: {...defaultBookmarkData, ...this.props.bookmarkData},
+  }
+
+  getCleanState () {
+    return {
+      bookmarkData: this.defaultBookmarkData,
       rawTagsInput: ''
     }
-    this.handleFormFieldChange = this.handleFormFieldChange.bind(this)
-    this.processTagsInput = this.processTagsInput.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   makeNewBookmark (url) {
@@ -49,6 +57,7 @@ export class BookmarkForm extends React.Component {
       .map(tag => tag.trim())
   }
 
+  // TODO: validation
   handleSubmit (event) {
     event.preventDefault()
     const {saveBookmark} = this.props.actions
@@ -62,6 +71,10 @@ export class BookmarkForm extends React.Component {
       .add('archived', this.state.bookmarkData.archived, {listed: true})
     console.log('DEBUG - bookmarkModel:', bookmarkModel)
     saveBookmark(bookmarkModel)
+  }
+
+  handleCancel (event) {
+    this.setState(this.getCleanState())
   }
 
   render () {
@@ -99,7 +112,7 @@ export class BookmarkForm extends React.Component {
                 <button type='submit' className='btn btn-primary'>Add Bookmark</button>
               </div>
               <div className='col-xs-6 col-sm-3'>
-                <button type='cancel' className='btn btn-secondary'>Cancel</button>
+                <button type='reset' className='btn btn-secondary' onClick={this.handleCancel}>Cancel</button>
               </div>
             </div>
           </form>
