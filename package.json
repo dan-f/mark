@@ -47,7 +47,7 @@
     "react-router": "^2.8.1",
     "redux": "^3.6.0",
     "redux-logger": "^2.7.0",
-    "redux-solid-auth": "^0.1.1",
+    "redux-solid-auth": "^0.2.0",
     "redux-thunk": "^2.1.0"
   }
 }

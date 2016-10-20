@@ -11,14 +11,7 @@ class Auth extends React.Component {
     const { Actions } = this.props
     const { router } = this.context
     Actions.authenticate()
-      .then(axn => {
-        // TODO: clean up this promise in the redux-solid-auth lib
-        if (axn.type === 'AUTH_SUCCESS') {
-          return getProfile(axn.webId)
-        } else {
-          throw new Error(axn.error)
-        }
-      })
+      .then(webId => getProfile(webId))
       .then(solidProfile => solidProfile.loadTypeRegistry())
       .then(solidProfile => Actions.maybeInstallAppResources(solidProfile))
       .then(bookmarksUrl => router.push(`/bookmarks/${encodeURIComponent(bookmarksUrl)}`))
