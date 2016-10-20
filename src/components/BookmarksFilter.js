@@ -66,7 +66,7 @@ export default class BookmarksFilter extends React.Component {
 
         <div className='row'>
           <div className='col-xs-12'>
-            <form className='form-inline'>
+            <form className='form-inline' onSubmit={event => event.preventDefault()}>
               <div className='form-group'>
                 <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
                 <div className={'dropdown ' + (this.state.tagFilterInput && this.getMatchingTags().size ? 'open' : '')}>

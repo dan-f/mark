@@ -14,7 +14,17 @@ function bookmarks (state = [], action) {
   }
 }
 
+function bookmarksUrl (state = '', action) {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL:
+      return action.url
+    default:
+      return state
+  }
+}
+
 export default combineReducers({
   auth,
-  bookmarks
+  bookmarks,
+  bookmarksUrl
 })

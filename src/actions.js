@@ -21,6 +21,10 @@ export function maybeInstallAppResources (solidProfile) {
           })
           .then(() => bookmarksUrl)
       })
+      .then(bookmarksUrl => {
+        dispatch(setBookmarksUrl(bookmarksUrl))
+        return bookmarksUrl
+      })
       .catch(error => {
         dispatch(bookmarksError(error))
         throw error
@@ -178,6 +182,15 @@ export function loadBookmarksFailure (error) {
   return {
     type: ActionTypes.BOOKMARKS_LOAD_FAILURE,
     error
+  }
+}
+
+// Setting the bookmarks URL for the application
+
+export function setBookmarksUrl (url) {
+  return {
+    type: ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL,
+    url
   }
 }
 
