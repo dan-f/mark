@@ -10,7 +10,7 @@ export default function BookmarkListItem ({ title, url, tags, comments }) {
               {tag}
             </span>
           )}
-          <h5><a href={url}>{title}</a></h5>
+          <h5><a href={url} target='_blank'>{title}</a></h5>
         </div>
       </div>
       <div className='bookmark-description row'>
