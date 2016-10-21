@@ -5,9 +5,10 @@ import { rdflib } from 'solid-client'
 import { isUri } from 'valid-url'
 
 import * as Actions from '../actions'
+import BookmarkForm from '../components/BookmarkForm'
 import { bookmarkModelFactory } from '../models'
 
-export class BookmarkForm extends React.Component {
+export class BookmarkEditor extends React.Component {
   constructor (props) {
     super(props)
     this.state = this.getCleanState()
@@ -89,46 +90,21 @@ export class BookmarkForm extends React.Component {
   }
 
   render () {
+    const props = {
+      title: this.state.formData.title,
+      url: this.state.formData.url,
+      tags: this.state.rawTagsInput,
+      description: this.state.formData.description,
+      isValid: this.state.isValid,
+      handleChangeTitle: this.handleFormFieldChange('title'),
+      handleChangeUrl: this.handleFormFieldChange('url'),
+      handleChangeTags: this.handleFormFieldChange('tags', this.processTagsInput),
+      handleChangeDescription: this.handleFormFieldChange('description'),
+      handleSubmit: this.handleSubmit,
+      handleCancel: this.handleCancel,
+    }
     return (
-      <div className='row'>
-        <div className='col-xs-12'>
-          <span>Add a bookmark</span>
-          <form onSubmit={this.handleSubmit}>
-            <div className='form-group row'>
-              <label htmlFor='title-input' className='col-xs-3 col-sm-2 col-form-label'>Title:</label>
-              <div className='col-xs-10'>
-                <input type='text' className='form-control' id='title-input' value={this.state.formData.title} onChange={this.handleFormFieldChange('title')} />
-              </div>
-            </div>
-            <div className='form-group row'>
-              <label htmlFor='url-input' className='col-xs-3 col-sm-2 col-form-label'>URL:</label>
-              <div className='col-xs-10'>
-                <input type='url' className='form-control' id='url-input' value={this.state.formData.url} onChange={this.handleFormFieldChange('url')} />
-              </div>
-            </div>
-            <div className='form-group row'>
-              <label htmlFor='tag-input' className='col-xs-3 col-sm-2 col-form-label'>Tags:</label>
-              <div className='col-xs-10'>
-                <input type='text' className='form-control' id='tag-input' value={this.state.rawTagsInput} onChange={this.handleFormFieldChange('tags', this.processTagsInput)} />
-              </div>
-            </div>
-            <div className='form-group row'>
-              <label htmlFor='description-textarea' className='col-xs-3 col-sm-2 col-form-label'>Description:</label>
-              <div className='col-xs-10'>
-                <textarea className='form-control' rows='3' id='description-textarea' value={this.state.formData.description} onChange={this.handleFormFieldChange('description')} />
-              </div>
-            </div>
-            <div className='form-group row'>
-              <div className='col-xs-6 col-sm-3'>
-                <button type='submit' className='btn btn-primary' disabled={!this.state.isValid} >Add Bookmark</button>
-              </div>
-              <div className='col-xs-6 col-sm-3'>
-                <button type='reset' className='btn btn-secondary' onClick={this.handleCancel}>Cancel</button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
+      <BookmarkForm {...props} />
     )
   }
 }
@@ -145,4 +121,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(BookmarkForm)
+export default connect(mapStateToProps, mapDispatchToProps)(BookmarkEditor)
