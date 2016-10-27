@@ -4,7 +4,7 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 import FilterableBookmarksList from '../components/FilterableBookmarksList'
-import BookmarkEditor from './BookmarkEditor'
+import BookmarkCreator from './BookmarkCreator'
 
 class BookmarksLoader extends React.Component {
   componentDidMount () {
@@ -17,7 +17,7 @@ class BookmarksLoader extends React.Component {
     const {bookmarks} = this.props
     return (
       <div>
-        <BookmarkEditor />
+        <BookmarkCreator />
         <FilterableBookmarksList bookmarks={bookmarks} />
       </div>
     )

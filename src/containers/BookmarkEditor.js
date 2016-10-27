@@ -15,7 +15,6 @@ export class BookmarkEditor extends React.Component {
     this.handleFormFieldChange = this.handleFormFieldChange.bind(this)
     this.processTagsInput = this.processTagsInput.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
-    this.handleCancel = this.handleCancel.bind(this)
   }
 
   get defaultFormData () {
@@ -34,10 +33,6 @@ export class BookmarkEditor extends React.Component {
       rawTagsInput: '',
       isValid: false
     }
-  }
-
-  makeNewBookmark (url) {
-    return bookmarkModelFactory(this.props.webId)(rdflib.graph(), url)
   }
 
   isFormDataValid (formData) {
@@ -73,9 +68,10 @@ export class BookmarkEditor extends React.Component {
       return
     }
     const {saveBookmark} = this.props.actions
-    const bookmarkModel = this.state.formData.tags.reduce(
+    const bookmarkModel = this.state.formData.tags
+      .reduce(
         (bookmarkModel, tag) => bookmarkModel.add('tags', tag, {listed: true}),
-        this.makeNewBookmark(this.state.formData.url)
+        this.props.model
       )
       .add('url', this.state.formData.url, {listed: true})
       .add('title', this.state.formData.title, {listed: true})
@@ -83,10 +79,6 @@ export class BookmarkEditor extends React.Component {
       .add('archived', this.state.formData.archived, {listed: true})
     saveBookmark(bookmarkModel)
       .then(this.setState(this.getCleanState()))
-  }
-
-  handleCancel (event) {
-    this.setState(this.getCleanState())
   }
 
   render () {
@@ -101,7 +93,7 @@ export class BookmarkEditor extends React.Component {
       handleChangeTags: this.handleFormFieldChange('tags', this.processTagsInput),
       handleChangeDescription: this.handleFormFieldChange('description'),
       handleSubmit: this.handleSubmit,
-      handleCancel: this.handleCancel,
+      handleCancel: this.props.handleCancel,
     }
     return (
       <BookmarkForm {...props} />
