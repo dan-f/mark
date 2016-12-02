@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
-import FilterableBookmarksList from '../components/FilterableBookmarksList'
+import FilterableBookmarksList from './FilterableBookmarksList'
 import BookmarkCreator from './BookmarkCreator'
 
 class BookmarksLoader extends React.Component {

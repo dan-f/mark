@@ -151,9 +151,12 @@ export function loadBookmarks (url, ownerWebId) {
       .then(solidResponse => {
         const bookmarksGraph = solidResponse.parsedGraph()
         const bookmarkModel = bookmarkModelFactory(ownerWebId)
-        const bookmarks = Immutable.Set(bookmarksGraph.statements.map(st => st.subject.value))
+        const bookmarks = bookmarksGraph.statements
+          .map(st => st.subject.value)
           .map(subject => bookmarkModel(bookmarksGraph, subject))
-          .toArray()
+          .reduce((map, model) => {
+            return map.set(model.subject.value, {model, isEditing: false})
+          }, Immutable.Map())
         dispatch(loadBookmarksSuccess(bookmarks))
         return bookmarksGraph
       })
@@ -200,5 +203,43 @@ export function bookmarksError (error) {
   return {
     type: ActionTypes.BOOKMARKS_ERROR,
     error
+  }
+}
+
+// Editing
+
+export function edit (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK,
+    bookmark
+  }
+}
+
+export function cancelEdit (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL,
+    bookmark
+  }
+}
+
+export function editNew () {
+  return {
+    type: ActionTypes.BOOKMARKS_EDIT_NEW_BOOKMARK
+  }
+}
+
+// Filtering
+
+export function addFilterTag (tag) {
+  return {
+    type: ActionTypes.BOOKMARKS_FILTER_ADD_TAG,
+    tag
+  }
+}
+
+export function removeFilterTag (tag) {
+  return {
+    type: ActionTypes.BOOKMARKS_FILTER_REMOVE_TAG,
+    tag
   }
 }

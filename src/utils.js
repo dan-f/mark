@@ -1,5 +1,5 @@
-import { join } from 'path'
 import { rdflib } from 'solid-client'
+import urljoin from 'url-join'
 
 export const BOOKMARK_RDF_CLASS =
   rdflib.namedNode('http://www.w3.org/2002/01/bookmark#Bookmark')
@@ -18,7 +18,7 @@ export function getBaseUrl (url) {
  * expected to reside.
  */
 export function defaultBookmarksUrl (baseUrl) {
-  return join(baseUrl, 'solid-bookmarks', 'bookmarks.ttl')
+  return urljoin(baseUrl, 'solid-bookmarks', 'bookmarks.ttl')
 }
 
 /**

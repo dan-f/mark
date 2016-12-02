@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function BookmarkListItem ({ title, url, tags, comments }) {
+export default function BookmarkListItem ({ title, url, tags, comments, onClickEdit }) {
   return (
     <li className='list-group-item'>
       <div className='bookmark-title-row row'>
@@ -20,7 +20,7 @@ export default function BookmarkListItem ({ title, url, tags, comments }) {
       </div>
       <div className='bookmark-actions row'>
         <div className='bookmark-edit col-xs-12'>
-          <button type='button' className='btn btn-secondary'>Edit</button>
+          <button type='button' className='btn btn-secondary' onClick={onClickEdit}>Edit</button>
         </div>
       </div>
     </li>

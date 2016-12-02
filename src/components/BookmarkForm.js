@@ -16,7 +16,6 @@ export default function BookmarkForm ({
   return (
     <div className='row'>
       <div className='col-xs-12'>
-        <span>Add a bookmark</span>
         <form onSubmit={handleSubmit}>
           <div className='form-group row'>
             <label htmlFor='title-input' className='col-xs-3 col-sm-2 col-form-label'>Title:</label>
@@ -44,7 +43,7 @@ export default function BookmarkForm ({
           </div>
           <div className='form-group row'>
             <div className='col-xs-6 col-sm-3'>
-              <button type='submit' className='btn btn-primary' disabled={!isValid}>Add Bookmark</button>
+              <button type='submit' className='btn btn-primary' disabled={!isValid}>Submit</button>
             </div>
             <div className='col-xs-6 col-sm-3'>
               <button type='reset' className='btn btn-secondary' onClick={handleCancel}>Cancel</button>

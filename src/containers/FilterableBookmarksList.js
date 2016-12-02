@@ -1,8 +1,8 @@
 import * as Immutable from 'immutable'
 import React from 'react'
 
-import BookmarksFilter from './BookmarksFilter'
-import BookmarksList from './BookmarksList'
+import BookmarksFilter from '../components/BookmarksFilter'
+import EditableBookmarksList from './EditableBookmarksList'
 
 export default class FilterableBookmarksList extends React.Component {
   constructor (props) {
@@ -18,6 +18,7 @@ export default class FilterableBookmarksList extends React.Component {
 
   getTags () {
     return this.props.bookmarks
+      .map(bookmark => bookmark.model)
       .map(bookmark => bookmark.get('tags'))
       .reduce((allTags, curTags) => {
         return [...allTags, ...curTags]
@@ -50,9 +51,8 @@ export default class FilterableBookmarksList extends React.Component {
           addTag={this.addTag}
           removeTag={this.removeTag}
         />
-        <BookmarksList
+        <EditableBookmarksList
           showArchived={this.state.showArchived}
-          bookmarks={this.props.bookmarks}
           selectedTags={this.state.selectedTags}
         />
       </div>
