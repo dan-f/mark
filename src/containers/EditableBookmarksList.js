@@ -15,7 +15,7 @@ export class EditableBookmarksList extends React.Component {
   }
 
   getVisibleBookmarks () {
-    const { bookmarks, showArchived, selectedTags } = this.props
+    const { bookmarks, selectedTags } = this.props
     return bookmarks.filter(bookmark => {
       const model = bookmark.model
       const canShowBasedOnTag = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
@@ -71,7 +71,8 @@ export class EditableBookmarksList extends React.Component {
 
 function mapStateToProps (state) {
   return {
-    bookmarks: state.bookmarks
+    bookmarks: state.bookmarks,
+    selectedTags: state.filters.selectedTags
   }
 }
 

@@ -14,11 +14,10 @@ class BookmarksLoader extends React.Component {
   }
 
   render () {
-    const {bookmarks} = this.props
     return (
       <div>
         <BookmarkCreator />
-        <FilterableBookmarksList bookmarks={bookmarks} />
+        <FilterableBookmarksList />
       </div>
     )
   }
@@ -26,7 +25,6 @@ class BookmarksLoader extends React.Component {
 
 function mapStateToProps (state) {
   return {
-    bookmarks: state.bookmarks,
     webId: state.auth.webId
   }
 }

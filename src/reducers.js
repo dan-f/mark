@@ -33,21 +33,22 @@ function bookmarksUrl (state = '', action) {
   }
 }
 
-function tags (state = Immutable.Set(), action) {
+function selectedTags (state = Immutable.Set(), action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_FILTER_ADD_TAG:
-      return state.add(tag)
+      return state.add(action.tag)
     case ActionTypes.BOOKMARKS_FILTER_REMOVE_TAG:
-      return state.remove(tag)
+      return state.remove(action.tag)
     default:
       return state
   }
 }
 
-const filters = combineReducers({tags})
+const filters = combineReducers({selectedTags})
 
 export default combineReducers({
   auth,
   bookmarks,
-  bookmarksUrl
+  bookmarksUrl,
+  filters
 })
