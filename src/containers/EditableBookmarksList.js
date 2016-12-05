@@ -3,8 +3,7 @@ import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
-import BookmarkEditor from './BookmarkEditor'
-import BookmarkListItem from '../components/BookmarkListItem'
+import BookmarksList from '../components/BookmarksList'
 
 export class EditableBookmarksList extends React.Component {
   constructor (props) {
@@ -22,7 +21,7 @@ export class EditableBookmarksList extends React.Component {
       // const canShowBasedOnArchive = showArchived ? true : !model.any('archived')
       // return canShowBasedOnTag && canShowBasedOnArchive
       return canShowBasedOnTag
-    })
+    }).valueSeq()
   }
 
   onClickEditBookmark (bookmarkModel) {
@@ -41,30 +40,11 @@ export class EditableBookmarksList extends React.Component {
 
   render () {
     return (
-      <div className='row'>
-        <div className='col-xs-12'>
-          <ul className='list-group'>
-            {this.getVisibleBookmarks().valueSeq().map(bookmark =>
-              bookmark.isEditing
-                ? <li className='list-group-item' key={bookmark.model.any('url')}>
-                    <BookmarkEditor
-                      key={bookmark.model.any('url')}
-                      model={bookmark.model}
-                      handleCancel={this.onClickCancelEditing(bookmark.model)}
-                    />
-                  </li>
-                : <BookmarkListItem
-                    key={bookmark.model.any('url')}
-                    title={bookmark.model.any('title')}
-                    url={bookmark.model.any('url')}
-                    tags={bookmark.model.get('tags')}
-                    comments={bookmark.model.any('description')}
-                    onClickEdit={this.onClickEditBookmark(bookmark.model)}
-                  />
-            )}
-          </ul>
-        </div>
-      </div>
+      <BookmarksList
+        bookmarks={this.getVisibleBookmarks()}
+        handleCancelEditing={this.onClickCancelEditing}
+        handleClickEdit={this.onClickEditBookmark}
+      />
     )
   }
 }

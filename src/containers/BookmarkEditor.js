@@ -2,12 +2,10 @@ import defaults from 'lodash/defaults'
 import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import { rdflib } from 'solid-client'
 import { isUri } from 'valid-url'
 
 import * as Actions from '../actions'
 import BookmarkForm from '../components/BookmarkForm'
-import { bookmarkModelFactory } from '../models'
 
 export class BookmarkEditor extends React.Component {
   constructor (props) {
@@ -50,8 +48,7 @@ export class BookmarkEditor extends React.Component {
   }
 
   isFormDataValid (formData) {
-    return isUri(formData.url)
-      && formData.title.length > 0
+    return isUri(formData.url) && formData.title.length > 0
   }
 
   handleFormFieldChange (fieldName, processTargetVal = val => val) {
@@ -113,7 +110,6 @@ export class BookmarkEditor extends React.Component {
     saveBookmark(bookmarkModel)
       .then(this.setState(this.getCleanState()))
       .catch(err => {
-        debugger
         console.log(err)
       })
   }
@@ -130,7 +126,7 @@ export class BookmarkEditor extends React.Component {
       handleChangeTags: this.handleFormFieldChange('tags', this.processTagsInput),
       handleChangeDescription: this.handleFormFieldChange('description'),
       handleSubmit: this.handleSubmit,
-      handleCancel: this.props.handleCancel,
+      handleCancel: this.props.handleCancel
     }
     return (
       <BookmarkForm {...props} />
