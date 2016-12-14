@@ -40,6 +40,11 @@ export class BookmarkEditor extends React.Component {
     )
   }
 
+  afterSubmit () {
+    const hook = this.props.afterSubmit
+    return hook ? hook() : null
+  }
+
   getCleanState () {
     return {
       formData: this.initialFormData,
@@ -118,6 +123,8 @@ export class BookmarkEditor extends React.Component {
       .catch(err => {
         console.log(err)
       })
+
+    this.afterSubmit()
   }
 
   render () {

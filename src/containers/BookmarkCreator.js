@@ -15,7 +15,7 @@ export class BookmarkCreator extends React.Component {
       newBookmarkModel: null
     }
     this.handleClickNewBookmark = this.handleClickNewBookmark.bind(this)
-    this.handleCancel = this.handleCancel.bind(this)
+    this.reset = this.reset.bind(this)
   }
 
   makeNewBookmark () {
@@ -26,13 +26,13 @@ export class BookmarkCreator extends React.Component {
     this.setState({newBookmarkModel: this.makeNewBookmark()})
   }
 
-  handleCancel (event) {
+  reset (event) {
     this.setState({newBookmarkModel: null})
   }
 
   render () {
     return this.state.newBookmarkModel
-      ? <BookmarkEditor model={this.state.newBookmarkModel} handleCancel={this.handleCancel} />
+      ? <BookmarkEditor model={this.state.newBookmarkModel} handleCancel={this.reset} afterSubmit={this.reset} />
       : (
         <div className='row'>
           <div className='col-xs-12'>
