@@ -14,13 +14,12 @@ export class EditableBookmarksList extends React.Component {
   }
 
   getVisibleBookmarks () {
-    const { bookmarks, selectedTags } = this.props
+    const { bookmarks, selectedTags, showArchived } = this.props
     return bookmarks.filter(bookmark => {
       const model = bookmark.model
       const canShowBasedOnTag = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
-      // const canShowBasedOnArchive = showArchived ? true : !model.any('archived')
-      // return canShowBasedOnTag && canShowBasedOnArchive
-      return canShowBasedOnTag
+      const canShowBasedOnArchive = showArchived ? true : !model.any('archived')
+      return canShowBasedOnTag && canShowBasedOnArchive
     }).valueSeq()
   }
 
@@ -52,7 +51,8 @@ export class EditableBookmarksList extends React.Component {
 function mapStateToProps (state) {
   return {
     bookmarks: state.bookmarks,
-    selectedTags: state.filters.selectedTags
+    selectedTags: state.filters.selectedTags,
+    showArchived: state.filters.showArchived
   }
 }
 

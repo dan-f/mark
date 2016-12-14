@@ -13,6 +13,7 @@ export class BookmarkEditor extends React.Component {
     this.state = this.getCleanState()
     this.handleFormFieldChange = this.handleFormFieldChange.bind(this)
     this.processTagsInput = this.processTagsInput.bind(this)
+    this.processArchivedInput = this.processArchivedInput.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
   }
 
@@ -51,11 +52,11 @@ export class BookmarkEditor extends React.Component {
     return isUri(formData.url) && formData.title.length > 0
   }
 
-  handleFormFieldChange (fieldName, processTargetVal = val => val) {
+  handleFormFieldChange (fieldName, processEvent = event => event.target.value) {
     return (event) => {
       const formData = {
         ...this.state.formData,
-        [fieldName]: processTargetVal(event.target.value)
+        [fieldName]: processEvent(event)
       }
       this.setState({
         isValid: this.isFormDataValid(formData),
@@ -64,8 +65,9 @@ export class BookmarkEditor extends React.Component {
     }
   }
 
-  processTagsInput (rawTagsInput) {
+  processTagsInput (event) {
     // rawTagsInput is a list of comma separated tags
+    const rawTagsInput = event.target.value
     this.setState({
       ...this.state,
       rawTagsInput
@@ -74,6 +76,10 @@ export class BookmarkEditor extends React.Component {
       .split(',')
       .filter(tag => tag.length > 0)
       .map(tag => tag.trim())
+  }
+
+  processArchivedInput (event) {
+    return event.target.checked
   }
 
   handleSubmit (event) {
@@ -120,11 +126,13 @@ export class BookmarkEditor extends React.Component {
       url: this.state.formData.url,
       tags: this.state.rawTagsInput,
       description: this.state.formData.description,
+      archived: this.state.formData.archived,
       isValid: this.state.isValid,
       handleChangeTitle: this.handleFormFieldChange('title'),
       handleChangeUrl: this.handleFormFieldChange('url'),
       handleChangeTags: this.handleFormFieldChange('tags', this.processTagsInput),
       handleChangeDescription: this.handleFormFieldChange('description'),
+      handleChangeArchived: this.handleFormFieldChange('archived', this.processArchivedInput),
       handleSubmit: this.handleSubmit,
       handleCancel: this.props.handleCancel
     }

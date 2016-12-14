@@ -243,3 +243,10 @@ export function removeFilterTag (tag) {
     tag
   }
 }
+
+export function showArchived (shown) {
+  return {
+    type: ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED,
+    shown
+  }
+}

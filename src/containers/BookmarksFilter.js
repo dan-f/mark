@@ -14,6 +14,7 @@ export class BookmarksFilter extends React.Component {
     this.getMatchingTags = this.getMatchingTags.bind(this)
     this.handleSelectTag = this.handleSelectTag.bind(this)
     this.handleRemoveTag = this.handleRemoveTag.bind(this)
+    this.handleShowArchived = this.handleShowArchived.bind(this)
   }
 
   getTags () {
@@ -31,20 +32,24 @@ export class BookmarksFilter extends React.Component {
   handleSelectTag (tag) {
     return () => {
       this.setState({tagFilterInput: ''})
-      this.props.addFilterTag(tag)
+      this.props.actions.addFilterTag(tag)
     }
   }
 
   handleRemoveTag (tag) {
     return (event) => {
       if (event.type === 'click' || event.key === ' ') {
-        this.props.removeFilterTag(tag)
+        this.props.actions.removeFilterTag(tag)
       }
     }
   }
 
   handleTagFilterInput (event) {
     this.setState({tagFilterInput: event.target.value})
+  }
+
+  handleShowArchived (event) {
+    this.props.actions.showArchived(event.target.checked)
   }
 
   getMatchingTags () {
@@ -55,14 +60,17 @@ export class BookmarksFilter extends React.Component {
   }
 
   render () {
+    const {showArchived} = this.props
     return (
       <BookmarksFilterControls
         selectedTags={this.props.selectedTags}
         tagFilterInput={this.state.tagFilterInput}
         matchingTags={this.getMatchingTags()}
+        showArchived={showArchived}
         handleSelectTag={this.handleSelectTag}
         handleRemoveTag={this.handleRemoveTag}
         handleTagFilterInput={this.handleTagFilterInput}
+        handleShowArchived={this.handleShowArchived}
       />
     )
   }
@@ -71,12 +79,13 @@ export class BookmarksFilter extends React.Component {
 function mapStateToProps (state) {
   return {
     bookmarks: state.bookmarks,
-    selectedTags: state.filters.selectedTags
+    selectedTags: state.filters.selectedTags,
+    showArchived: state.filters.showArchived
   }
 }
 
 function mapDispatchToProps (dispatch) {
-  return bindActionCreators(BookmarkActions, dispatch)
+  return {actions: bindActionCreators(BookmarkActions, dispatch)}
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(BookmarksFilter)

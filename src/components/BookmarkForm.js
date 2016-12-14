@@ -6,10 +6,12 @@ export default function BookmarkForm ({
   tags,
   description,
   isValid,
+  archived,
   handleChangeTitle,
   handleChangeUrl,
   handleChangeTags,
   handleChangeDescription,
+  handleChangeArchived,
   handleSubmit,
   handleCancel
 }) {
@@ -39,6 +41,15 @@ export default function BookmarkForm ({
             <label htmlFor='description-textarea' className='col-xs-3 col-sm-2 col-form-label'>Description:</label>
             <div className='col-xs-10'>
               <textarea className='form-control' rows='3' id='description-textarea' value={description} onChange={handleChangeDescription} />
+            </div>
+          </div>
+          <div className='form-group row'>
+            <div className='col-xs-12'>
+              <label className='custom-control custom-checkbox'>
+                <input type='checkbox' className='custom-control-input' checked={archived} onChange={handleChangeArchived} />
+                <span className='custom-control-indicator' />
+                <span className='custom-control-description col-xs-3 col-sm-2'>Archived</span>
+              </label>
             </div>
           </div>
           <div className='form-group row'>

@@ -4,25 +4,14 @@ export default function BookmarksFilterControls ({
   selectedTags,
   tagFilterInput,
   matchingTags,
+  showArchived,
   handleSelectTag,
   handleRemoveTag,
-  handleTagFilterInput
+  handleTagFilterInput,
+  handleShowArchived
 }) {
   return (
     <div>
-
-      {/*
-      <div className='row'>
-        <div className='col-xs-12'>
-          <form>
-            <label className='form-check-inline'>
-              <input type='checkbox' className='form-check-input' checked={showArchived} onClick={toggleShowArchived} />
-              <span>Show archived</span>
-            </label>
-          </form>
-        </div>
-      </div>
-      */}
 
       <div className='row'>
         <div className='col-xs-12'>
@@ -35,7 +24,7 @@ export default function BookmarksFilterControls ({
       </div>
 
       <div className='row'>
-        <div className='col-xs-12'>
+        <div className='col-xs-6'>
           <form className='form-inline' onSubmit={event => event.preventDefault()}>
             <div className='form-group'>
               <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
@@ -48,6 +37,15 @@ export default function BookmarksFilterControls ({
                 </div>
               </div>
             </div>
+          </form>
+        </div>
+
+        <div className='col-xs-6' style={{textAlign: 'right'}}>
+          <form>
+            <label className='form-check-inline'>
+              <input type='checkbox' className='form-check-input' checked={showArchived} onChange={handleShowArchived} />
+              <span>Show archived</span>
+            </label>
           </form>
         </div>
       </div>

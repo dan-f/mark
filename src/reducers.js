@@ -44,7 +44,16 @@ function selectedTags (state = Immutable.Set(), action) {
   }
 }
 
-const filters = combineReducers({selectedTags})
+function showArchived (state = false, action) {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED:
+      return action.shown
+    default:
+      return state
+  }
+}
+
+const filters = combineReducers({selectedTags, showArchived})
 
 export default combineReducers({
   auth,

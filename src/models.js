@@ -24,11 +24,11 @@ function getSourceConfig (webId) {
 
 export function bookmarkModelFactory (webId) {
   return (graph, subject) => modelFactory(rdflib, getSourceConfig(webId), {
-      type: vocab.rdf('type'),
-      url: vocab.bookmark('recalls'),
-      title: vocab.dc('title'),
-      description: vocab.dc('description'),
-      tags: vocab.bookmark('hasTopic'),
-      archived: vocab.solid('read')
-    })(graph, subject).setAny('type', 'http://www.w3.org/2002/01/bookmark#Bookmark', {listed: true})
+    type: vocab.rdf('type'),
+    url: vocab.bookmark('recalls'),
+    title: vocab.dc('title'),
+    description: vocab.dc('description'),
+    tags: vocab.bookmark('hasTopic'),
+    archived: vocab.solid('read')
+  })(graph, subject).setAny('type', 'http://www.w3.org/2002/01/bookmark#Bookmark', {listed: true})
 }
