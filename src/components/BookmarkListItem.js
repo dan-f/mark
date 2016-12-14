@@ -1,16 +1,22 @@
 import React from 'react'
 
-export default function BookmarkListItem ({ title, url, tags, comments, onClickEdit }) {
+import Tag from './Tag'
+
+export default function BookmarkListItem ({ title, url, tags, comments, onClickEdit, handleSelectTag }) {
   return (
     <li className='list-group-item'>
       <div className='bookmark-title-row row'>
         <div className='col-xs-12'>
-          {tags.map(tag =>
-            <span key={tag} className='tag tag-default pull-xs-right' style={{marginLeft: '0.4em'}}>
-              {tag}
-            </span>
-          )}
-          <h5><a href={url} target='_blank'>{title}</a></h5>
+          <div className='row'>
+            <div className='col-xs-6'>
+              <h5><a href={url} target='_blank'>{title}</a></h5>
+            </div>
+            <div className='col-xs-6' style={{textAlign: 'right'}}>
+              {tags.map(tag =>
+                <Tag key={tag} tag={tag} handleSelect={handleSelectTag} />
+              )}
+            </div>
+          </div>
         </div>
       </div>
       <div className='bookmark-description row'>

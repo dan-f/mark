@@ -11,6 +11,7 @@ export class EditableBookmarksList extends React.Component {
     this.getVisibleBookmarks = this.getVisibleBookmarks.bind(this)
     this.onClickEditBookmark = this.onClickEditBookmark.bind(this)
     this.onClickCancelEditing = this.onClickCancelEditing.bind(this)
+    this.handleSelectTag = this.handleSelectTag.bind(this)
   }
 
   getVisibleBookmarks () {
@@ -37,12 +38,23 @@ export class EditableBookmarksList extends React.Component {
     }
   }
 
+  handleSelectTag (tag) {
+    const {actions} = this.props
+    return event => {
+      if (event.type !== 'click' && !(event.type === 'keyup' && event.key === ' ')) {
+        return
+      }
+      actions.addFilterTag(tag)
+    }
+  }
+
   render () {
     return (
       <BookmarksList
         bookmarks={this.getVisibleBookmarks()}
         handleCancelEditing={this.onClickCancelEditing}
         handleClickEdit={this.onClickEditBookmark}
+        handleSelectTag={this.handleSelectTag}
       />
     )
   }

@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Tag from './Tag'
+
 export default function BookmarksFilterControls ({
   selectedTags,
   tagFilterInput,
@@ -16,9 +18,7 @@ export default function BookmarksFilterControls ({
       <div className='row'>
         <div className='col-xs-12'>
           {selectedTags.map(tag =>
-            <span key={tag} role='button' tabIndex='0' className='btn tag tag-default' style={{marginLeft: '0.4em'}} onClick={handleRemoveTag(tag)} onKeyUp={handleRemoveTag(tag)}>
-              {tag}
-            </span>
+            <Tag key={tag} tag={tag} handleSelect={handleRemoveTag} />
           )}
         </div>
       </div>

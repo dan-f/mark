@@ -3,7 +3,7 @@ import React from 'react'
 import BookmarkListItem from './BookmarkListItem'
 import BookmarkEditor from '../containers/BookmarkEditor'
 
-export default function BookmarksList ({ bookmarks, handleCancelEditing, handleClickEdit }) {
+export default function BookmarksList ({ bookmarks, handleCancelEditing, handleClickEdit, handleSelectTag }) {
   return (
     <div className='row'>
       <div className='col-xs-12'>
@@ -24,6 +24,7 @@ export default function BookmarksList ({ bookmarks, handleCancelEditing, handleC
                   tags={bookmark.model.get('tags')}
                   comments={bookmark.model.any('description')}
                   onClickEdit={handleClickEdit(bookmark.model)}
+                  handleSelectTag={handleSelectTag}
                 />
             )}
         </ul>
