@@ -1,0 +1,57 @@
+{
+  "name": "mark",
+  "version": "0.1.0",
+  "description": "A small bookmarks app for Solid - https://solid.mit.edu/",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dan-f/mark.git"
+  },
+  "keywords": [
+    "solid",
+    "bookmarks",
+    "web",
+    "decentralization",
+    "linked",
+    "data"
+  ],
+  "author": "Daniel Friedman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dan-f/mark/issues"
+  },
+  "homepage": "https://github.com/dan-f/mark#readme",
+  "devDependencies": {
+    "babel-cli": "^6.16.0",
+    "babel-loader": "^6.2.5",
+    "babel-plugin-transform-object-rest-spread": "^6.16.0",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-react": "^6.16.0",
+    "json-loader": "^0.5.4",
+    "react-hot-loader": "^3.0.0-beta.5",
+    "standard": "^8.4.0",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.2"
+  },
+  "dependencies": {
+    "immutable": "^3.8.1",
+    "lodash": "^4.16.4",
+    "modelld": "^0.10.0",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "react-redux": "^4.4.5",
+    "react-router": "^2.8.1",
+    "redux": "^3.6.0",
+    "redux-logger": "^2.7.0",
+    "redux-solid-auth": "^0.2.0",
+    "redux-thunk": "^2.1.0",
+    "url-join": "^1.1.0",
+    "uuid": "^2.0.3",
+    "valid-url": "^1.0.9"
+  }
+}
