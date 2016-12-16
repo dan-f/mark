@@ -70,9 +70,21 @@ function showArchived (state = false, action) {
 
 const filters = combineReducers({selectedTags, showArchived})
 
+function error (state = '', action) {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_ERROR_SET:
+      return action.errorMessage
+    case ActionTypes.BOOKMARKS_ERROR_CLEAR:
+      return ''
+    default:
+      return state
+  }
+}
+
 export default combineReducers({
   auth,
   bookmarks,
   bookmarksUrl,
-  filters
+  filters,
+  error
 })

@@ -1,17 +1,25 @@
 import React from 'react'
 
+import Error from '../containers/Error'
 import NewBookmarkButton from '../containers/NewBookmarkButton'
 
 export default function Header () {
   return (
-    <div className='row'>
-      <div className='col-xs-8'>
-        <h1>Solid Bookmarks</h1>
+    <div>
+      <div className='row'>
+        <div className='col-xs-8'>
+          <h1>Solid Bookmarks</h1>
+        </div>
+        <div className='col-xs-4'>
+          <span className='pull-xs-right' style={{marginTop: '10px'}}>
+            <NewBookmarkButton />
+          </span>
+        </div>
       </div>
-      <div className='col-xs-4'>
-        <span className='pull-xs-right' style={{marginTop: '10px'}}>
-          <NewBookmarkButton />
-        </span>
+      <div className='row'>
+        <div className='col-xs-12'>
+          <Error />
+        </div>
       </div>
     </div>
   )

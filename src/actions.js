@@ -18,6 +18,7 @@ export function maybeInstallAppResources (solidProfile) {
             if (error.code === 404) {
               return dispatch(createBookmarksResource(bookmarksUrl))
             }
+            dispatch(setError('Could not find the bookmarks file'))
             throw error
           })
           .then(() => bookmarksUrl)
@@ -25,10 +26,6 @@ export function maybeInstallAppResources (solidProfile) {
       .then(bookmarksUrl => {
         dispatch(setBookmarksUrl(bookmarksUrl))
         return bookmarksUrl
-      })
-      .catch(error => {
-        dispatch(bookmarksError(error))
-        throw error
       })
   }
 }
@@ -47,7 +44,7 @@ export function registerBookmarks (solidProfile) {
         return updatedBookmarksUrl
       })
       .catch(error => {
-        dispatch(registerBookmarksFailure(error))
+        dispatch(setError('Could not register bookmarks in the type index'))
         throw error
       })
   }
@@ -66,13 +63,6 @@ export function registerBookmarksSuccess (bookmarksUrl) {
   }
 }
 
-export function registerBookmarksFailure (error) {
-  return {
-    type: ActionTypes.BOOKMARKS_REGISTER_FAILURE,
-    error
-  }
-}
-
 // Create bookmarks resource
 
 export function createBookmarksResource (url) {
@@ -81,7 +71,7 @@ export function createBookmarksResource (url) {
     return web.put(url, '')
       .then(resp => dispatch(createBookmarksResourceSuccess()))
       .catch(error => {
-        dispatch(createBookmarksResourceFailure(error))
+        dispatch(setError('Could not create bookmarks file'))
         throw error
       })
   }
@@ -99,13 +89,6 @@ export function createBookmarksResourceSuccess () {
   }
 }
 
-export function createBookmarksResourceFailure (error) {
-  return {
-    type: ActionTypes.BOOKMARKS_CREATE_RESOURCE_FAILURE,
-    error
-  }
-}
-
 // Add/save bookmarks
 
 export function saveBookmark (bookmark) {
@@ -117,7 +100,7 @@ export function saveBookmark (bookmark) {
         return savedBookmark
       })
       .catch(error => {
-        dispatch(saveBookmarkError(error))
+        dispatch(setError('Could not save your bookmark'))
         throw error
       })
   }
@@ -133,13 +116,6 @@ export function saveBookmarkSuccess (bookmark) {
   return {
     type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS,
     bookmark
-  }
-}
-
-export function saveBookmarkError (error) {
-  return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_FAILURE,
-    error
   }
 }
 
@@ -162,7 +138,7 @@ export function loadBookmarks (url, ownerWebId) {
         return bookmarksGraph
       })
       .catch(error => {
-        dispatch(loadBookmarksFailure(error))
+        dispatch(setError('Could not load your bookmarks'))
         throw error
       })
   }
@@ -182,13 +158,6 @@ export function loadBookmarksSuccess (bookmarks) {
   }
 }
 
-export function loadBookmarksFailure (error) {
-  return {
-    type: ActionTypes.BOOKMARKS_LOAD_FAILURE,
-    error
-  }
-}
-
 // Setting the bookmarks URL for the application
 
 export function setBookmarksUrl (url) {
@@ -200,10 +169,16 @@ export function setBookmarksUrl (url) {
 
 // General error
 
-export function bookmarksError (error) {
+export function setError (errorMessage) {
   return {
-    type: ActionTypes.BOOKMARKS_ERROR,
-    error
+    type: ActionTypes.BOOKMARKS_ERROR_SET,
+    errorMessage
+  }
+}
+
+export function clearError () {
+  return {
+    type: ActionTypes.BOOKMARKS_ERROR_CLEAR
   }
 }
 
