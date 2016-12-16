@@ -9,15 +9,30 @@ function bookmarks (state = Immutable.Map(), action) {
     case ActionTypes.BOOKMARKS_LOAD_SUCCESS:
       return action.bookmarks
     case ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS:
-    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL:
       return state.set(action.bookmark.subject.value, {
         model: action.bookmark,
-        isEditing: false
+        isEditing: false,
+        isNew: false
       })
+    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL:
+      return state.get(action.bookmark.subject.value).isNew
+        ? state.remove(action.bookmark.subject.value)
+        : state.set(action.bookmark.subject.value, {
+          model: action.bookmark,
+          isEditing: false,
+          isNew: false
+        })
     case ActionTypes.BOOKMARKS_EDIT_BOOKMARK:
       return state.set(action.bookmark.subject.value, {
         model: action.bookmark,
-        isEditing: true
+        isEditing: true,
+        isNew: state.get(action.bookmark.subject.value).isNew
+      })
+    case ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK:
+      return state.set(action.bookmark.subject.value, {
+        model: action.bookmark,
+        isEditing: false,
+        isNew: true
       })
     default:
       return state

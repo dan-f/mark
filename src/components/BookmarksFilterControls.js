@@ -16,14 +16,6 @@ export default function BookmarksFilterControls ({
     <div>
 
       <div className='row'>
-        <div className='col-xs-12'>
-          {selectedTags.map(tag =>
-            <Tag key={tag} tag={tag} handleSelect={handleRemoveTag} />
-          )}
-        </div>
-      </div>
-
-      <div className='row'>
         <div className='col-xs-6'>
           <form className='form-inline' onSubmit={event => event.preventDefault()}>
             <div className='form-group'>
@@ -47,6 +39,14 @@ export default function BookmarksFilterControls ({
               <span>Show archived</span>
             </label>
           </form>
+        </div>
+      </div>
+
+      <div className='row' style={{marginTop: '5px', marginBottom: '5px'}}>
+        <div className='col-xs-12'>
+          {selectedTags.map(tag =>
+            <Tag key={tag} tag={tag} handleSelect={handleRemoveTag} />
+          )}
         </div>
       </div>
 

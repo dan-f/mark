@@ -18,9 +18,10 @@ export class EditableBookmarksList extends React.Component {
     const { bookmarks, selectedTags, showArchived } = this.props
     return bookmarks.filter(bookmark => {
       const model = bookmark.model
-      const canShowBasedOnTag = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
-      const canShowBasedOnArchive = showArchived ? true : !model.any('archived')
-      return canShowBasedOnTag && canShowBasedOnArchive
+      const tagInFilters = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
+      const fulfillsArchiveFilter = showArchived ? true : !model.any('archived')
+      const isNotNew = !bookmark.isNew
+      return tagInFilters && fulfillsArchiveFilter && isNotNew
     }).valueSeq()
   }
 

@@ -1,5 +1,6 @@
 import * as Immutable from 'immutable'
 import { rdflib, web } from 'solid-client'
+import uuid from 'uuid'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
@@ -222,9 +223,17 @@ export function cancelEdit (bookmark) {
   }
 }
 
-export function editNew () {
+function createNew (webId) {
   return {
-    type: ActionTypes.BOOKMARKS_EDIT_NEW_BOOKMARK
+    type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
+    bookmark: bookmarkModelFactory(webId)(rdflib.graph(), `#${uuid.v4()}`)
+  }
+}
+
+export function createAndEditNew (webId) {
+  return dispatch => {
+    const {bookmark} = dispatch(createNew(webId))
+    dispatch(edit(bookmark))
   }
 }
 
