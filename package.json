@@ -1,5 +1,5 @@
 {
-  "name": "solid-bookmarks",
+  "name": "mark",
   "version": "0.1.0",
   "description": "A small bookmarks app for Solid - https://solid.mit.edu/",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dan-f/solid-bookmarks.git"
+    "url": "git+https://github.com/dan-f/mark.git"
   },
   "keywords": [
     "solid",
@@ -23,9 +23,9 @@
   "author": "Daniel Friedman",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dan-f/solid-bookmarks/issues"
+    "url": "https://github.com/dan-f/mark/issues"
   },
-  "homepage": "https://github.com/dan-f/solid-bookmarks#readme",
+  "homepage": "https://github.com/dan-f/mark#readme",
   "devDependencies": {
     "babel-cli": "^6.16.0",
     "babel-loader": "^6.2.5",

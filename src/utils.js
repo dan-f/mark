@@ -18,7 +18,7 @@ export function getBaseUrl (url) {
  * expected to reside.
  */
 export function defaultBookmarksUrl (baseUrl) {
-  return urljoin(baseUrl, 'solid-bookmarks', 'bookmarks.ttl')
+  return urljoin(baseUrl, 'mark', 'bookmarks.ttl')
 }
 
 /**

@@ -8,7 +8,7 @@ export default function Header () {
     <div>
       <div className='row'>
         <div className='col-xs-8'>
-          <h1>Solid Bookmarks</h1>
+          <h1>Mark</h1>
         </div>
         <div className='col-xs-4'>
           <span className='pull-xs-right' style={{marginTop: '10px'}}>
