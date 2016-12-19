@@ -4,7 +4,7 @@
   "description": "A small bookmarks app for Solid - https://solid.mit.edu/",
   "main": "index.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --config webpack.prod.config.js",
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
