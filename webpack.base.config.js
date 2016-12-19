@@ -1,14 +1,28 @@
-const path = require('path')
 const webpack = require('webpack')
+
+const path = require('path')
 
 module.exports = {
   context: path.join(__dirname, '/src'),
-  entry: [
-    'react-hot-loader/patch',
-    'webpack-dev-server/client?http://0.0.0.0:3000',
-    'webpack/hot/only-dev-server',
-    './index'
-  ],
+  entry: {
+    app: './index',
+    vendor: [
+      'immutable',
+      'lodash',
+      'modelld',
+      'react',
+      'react-dom',
+      'react-redux',
+      'react-router',
+      'redux',
+      'redux-logger',
+      'redux-solid-auth',
+      'redux-thunk',
+      'url-join',
+      'uuid',
+      'valid-url'
+    ]
+  },
   output: {
     path: path.join(__dirname, '/build'),
     publicPath: '/build/',
@@ -32,7 +46,6 @@ module.exports = {
     xmlhttprequest: 'XMLHttpRequest'
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin()
-  ],
-  devtool: 'inline-source-map'
+    new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js')
+  ]
 }
