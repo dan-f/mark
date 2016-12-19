@@ -3,6 +3,7 @@ const webpack = require('webpack')
 const config = require('./webpack.base.config')
 
 config.plugins = [
+  ...config.plugins,
   new webpack.DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify('production')
   }),
