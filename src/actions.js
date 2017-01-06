@@ -198,7 +198,7 @@ export function cancelEdit (bookmark) {
   }
 }
 
-function createNew (webId) {
+export function createNew (webId) {
   return {
     type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
     bookmark: bookmarkModelFactory(webId)(rdflib.graph(), `#${uuid.v4()}`)

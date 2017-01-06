@@ -8,9 +8,8 @@ export const BOOKMARK_RDF_CLASS =
  * Gets the base url (up to and including the domain) from a url string.
  */
 export function getBaseUrl (url) {
-  const a = document.createElement('a')
-  a.href = url
-  return a.origin
+  const [proto, _, base] = url.split('/')
+  return `${proto}//${base}`
 }
 
 /**
