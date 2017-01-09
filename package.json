@@ -7,9 +7,8 @@
     "build": "webpack --config webpack.prod.config.js",
     "start": "node server.js",
     "mocha": "mocha --growl --require babel-register test/**.js",
-    "test": "cross-env NODE_ENV=test nyc npm run mocha",
+    "test": "cross-env NODE_ENV=test nyc --reporter=html npm run mocha",
     "test:dev": "npm run mocha -- --watch --debug",
-    "coverage:report": "nyc report --reporter=html",
     "coverage:coveralls": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
@@ -66,7 +65,7 @@
     "redux-logger": "^2.7.0",
     "redux-solid-auth": "^0.2.0",
     "redux-thunk": "^2.1.0",
-    "solid-client": "^0.23.3",
+    "solid-client": "^0.23.4",
     "url-join": "^1.1.0",
     "uuid": "^2.0.3",
     "valid-url": "^1.0.9"
