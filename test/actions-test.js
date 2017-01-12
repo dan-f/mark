@@ -273,9 +273,68 @@ describe('Actions', () => {
   describe('createNew', () => {
     it('creates a new (empty) bookmark model', () => {
       const webId = 'https://localhost:8443/profile/card#me'
-      const action = Actions.createNew(webId)
-      expect(action.type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
-      expect(action.bookmark.any('type')).to.equal('http://www.w3.org/2002/01/bookmark#Bookmark')
+      store.dispatch(Actions.createNew(webId))
+      const actions = store.getActions()
+      expect(actions.length).to.equal(1)
+      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
+      expect(actions[0].bookmark.any('type')).to.equal('http://www.w3.org/2002/01/bookmark#Bookmark')
+    })
+  })
+
+  describe('createAndEditNew', () => {
+    it('creates a new bookmark model and immediately edits it', () => {
+      const webId = 'https://localhost:8443/profile/card#me'
+      store.dispatch(Actions.createAndEditNew(webId))
+      const actions = store.getActions()
+      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
+      expect(actions[1].type).to.equal(AT.BOOKMARKS_EDIT_BOOKMARK)
+    })
+  })
+
+  describe('clearError', () => {
+    it('tells the app to remove the current error', () => {
+      store.dispatch(Actions.clearError())
+      expect(store.getActions()).to.eql([
+        { type: AT.BOOKMARKS_ERROR_CLEAR }
+      ])
+    })
+  })
+
+  describe('cancelEdit', () => {
+    it('tells the app to quit editing a bookmark', () => {
+      store.dispatch(Actions.cancelEdit({}))
+      expect(store.getActions()).to.eql([
+        { type: AT.BOOKMARKS_EDIT_BOOKMARK_CANCEL, bookmark: {} }
+      ])
+    })
+  })
+
+  describe('addFilterTag', () => {
+    it('tells the app to add a filter tag', () => {
+      store.dispatch(Actions.addFilterTag('foo'))
+      expect(store.getActions()).to.eql([
+        { type: AT.BOOKMARKS_FILTER_ADD_TAG, tag: 'foo' }
+      ])
+    })
+  })
+
+  describe('removeFilterTag', () => {
+    it('tells the app to remove a filter tag', () => {
+      store.dispatch(Actions.removeFilterTag('foo'))
+      expect(store.getActions()).to.eql([
+        { type: AT.BOOKMARKS_FILTER_REMOVE_TAG, tag: 'foo' }
+      ])
+    })
+  })
+
+  describe('showArchived', () => {
+    it('tells the app to show or hide archived bookmarks', () => {
+      store.dispatch(Actions.showArchived(true))
+      store.dispatch(Actions.showArchived(false))
+      expect(store.getActions()).to.eql([
+        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: true },
+        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: false }
+      ])
     })
   })
 })
