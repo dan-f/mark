@@ -1,9 +1,11 @@
 /* eslint-env mocha */
 import nock from 'nock'
+import { rdflib } from 'solid-client'
 
 import { expect, mockStoreFactory, solidProfileFactory } from './common'
 import * as Actions from '../src/actions'
 import * as AT from '../src/actionTypes'
+import { bookmarkModelFactory } from '../src/models'
 
 describe('Actions', () => {
   const typeRegistryTurtle = `
@@ -176,9 +178,41 @@ describe('Actions', () => {
   })
 
   describe('saveBookmark', () => {
-    it('saves a bookmark')
+    const webId = 'https://localhost:8443/profile/card#me'
+    const graph = rdflib.graph()
+    const subject = rdflib.NamedNode.fromValue('https://localhost:8443/path/to/bookmarks.ttl#SomeBookmark')
+    const bookmark = bookmarkModelFactory(webId)(graph, subject)
 
-    it('fires an app error if the save fails')
+    it('saves a bookmark', () => {
+      nock('https://localhost:8443/')
+        .patch('/mark/bookmarks.ttl')
+        .reply(200)
+
+      return store.dispatch(Actions.saveBookmark(bookmark))
+        .then(() => {
+          const actions = store.getActions()
+          expect(actions.length).to.equal(2)
+          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST })
+          expect(actions[1].type).to.equal(AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS)
+        })
+    })
+
+    it('fires an app error if the save fails', () => {
+      nock('https://localhost:8443/')
+        .patch('/mark/bookmarks.ttl')
+        .reply(500)
+
+      return store.dispatch(Actions.saveBookmark(bookmark))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
+            {
+              type: AT.BOOKMARKS_ERROR_SET,
+              errorMessage: 'Could not save your bookmark'
+            }
+          ])
+        })
+    })
   })
 
   describe('loadBookmarks', () => {
