@@ -1,12 +1,8 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
-import uuid from 'uuid'
-import { rdflib } from 'solid-client'
 
 import * as Actions from '../actions'
-import BookmarkEditor from './BookmarkEditor'
-import { bookmarkModelFactory } from '../models'
 
 export function NewBookmarkButton ({ webId, actions, newBookmark }) {
   const alreadyEditing = newBookmark !== null

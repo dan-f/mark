@@ -6,7 +6,9 @@
   "scripts": {
     "build": "webpack --config webpack.prod.config.js",
     "start": "node server.js",
-    "mocha": "mocha --growl --require babel-register test/**.js",
+    "lint": "standard --verbose src/**/*.js test/**/*.js",
+    "mocha": "mocha --growl --require babel-register test/**/*.js",
+    "pretest": "npm run lint",
     "test": "cross-env NODE_ENV=test nyc --reporter=html npm run mocha",
     "test:dev": "npm run mocha -- --watch --debug",
     "coverage:coveralls": "nyc report --reporter=text-lcov | coveralls"
@@ -49,7 +51,7 @@
     "redux-mock-store": "^1.2.1",
     "sinon": "^1.17.6",
     "sinon-chai": "^2.8.0",
-    "standard": "^8.4.0",
+    "standard": "^8.6.0",
     "webpack": "^1.13.2",
     "webpack-dev-server": "^1.16.2"
   },

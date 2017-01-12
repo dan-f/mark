@@ -8,7 +8,7 @@ export const BOOKMARK_RDF_CLASS =
  * Gets the base url (up to and including the domain) from a url string.
  */
 export function getBaseUrl (url) {
-  const [proto, _, base] = url.split('/')
+  const [proto, _, base] = url.split('/') // eslint-disable-line
   return `${proto}//${base}`
 }
 
