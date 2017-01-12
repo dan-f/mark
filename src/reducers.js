@@ -4,7 +4,7 @@ import auth from 'redux-solid-auth/lib/reducers'
 
 import * as ActionTypes from './actionTypes'
 
-function bookmarks (state = Immutable.Map(), action) {
+export function bookmarks (state = Immutable.Map(), action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_LOAD_SUCCESS:
       return action.bookmarks
@@ -39,7 +39,7 @@ function bookmarks (state = Immutable.Map(), action) {
   }
 }
 
-function bookmarksUrl (state = '', action) {
+export function bookmarksUrl (state = '', action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL:
       return action.url
@@ -48,7 +48,7 @@ function bookmarksUrl (state = '', action) {
   }
 }
 
-function selectedTags (state = Immutable.Set(), action) {
+export function selectedTags (state = Immutable.Set(), action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_FILTER_ADD_TAG:
       return state.add(action.tag)
@@ -59,7 +59,7 @@ function selectedTags (state = Immutable.Set(), action) {
   }
 }
 
-function showArchived (state = false, action) {
+export function showArchived (state = false, action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED:
       return action.shown
@@ -70,7 +70,7 @@ function showArchived (state = false, action) {
 
 const filters = combineReducers({selectedTags, showArchived})
 
-function error (state = '', action) {
+export function error (state = '', action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_ERROR_SET:
       return action.errorMessage
