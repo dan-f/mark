@@ -216,9 +216,58 @@ describe('Actions', () => {
   })
 
   describe('loadBookmarks', () => {
-    it('fetches the bookmarks resource and creates a map of bookmark models')
+    it('fetches the bookmarks resource and creates a map of bookmark models', () => {
+      const bookmarksTurtle = `
+        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+        @prefix bookmark: <http://www.w3.org/2002/01/bookmark#> .
+        @prefix dc: <http://purl.org/dc/elements/1.1/> .
 
-    it('fires an app error if the loading fails')
+        <#ExampleBookmark>
+            dc:description "An example bookmark" ;
+            dc:title "Example Bookmark" ;
+            a bookmark:Bookmark ;
+            bookmark:hasTopic "foo", "bar" ;
+            bookmark:recalls <http://example.com/> .
+      `
+
+      nock('https://localhost:8443/')
+        .get('/mark/bookmarks.ttl')
+        .reply(200, bookmarksTurtle, { 'Content-Type': 'text/turtle' })
+
+      const webId = 'https://localhost:8443/profile/card#me'
+      const url = 'https://localhost:8443/mark/bookmarks.ttl'
+
+      return store.dispatch(Actions.loadBookmarks(url, webId))
+        .then(() => {
+          const actions = store.getActions()
+          expect(actions.length).to.equal(2)
+          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url })
+          expect(actions[1].type).to.equal(AT.BOOKMARKS_LOAD_SUCCESS)
+          expect([...actions[1].bookmarks.keys()]).to.eql([
+            'https://localhost:8443/mark/bookmarks.ttl#ExampleBookmark'
+          ])
+        })
+    })
+
+    it('fires an app error if the loading fails', () => {
+      nock('https://localhost:8443/')
+        .get('/mark/bookmarks.ttl')
+        .reply(500)
+
+      const webId = 'https://localhost:8443/profile/card#me'
+      const url = 'https://localhost:8443/mark/bookmarks.ttl'
+
+      return store.dispatch(Actions.loadBookmarks(url, webId))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_LOAD_REQUEST, url },
+            {
+              type: AT.BOOKMARKS_ERROR_SET,
+              errorMessage: 'Could not load your bookmarks'
+            }
+          ])
+        })
+    })
   })
 
   describe('createNew', () => {
