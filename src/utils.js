@@ -1,4 +1,4 @@
-import { rdflib } from 'solid-client'
+import { rdflib, web } from 'solid-client'
 import urljoin from 'url-join'
 
 export const BOOKMARK_RDF_CLASS =
@@ -8,9 +8,8 @@ export const BOOKMARK_RDF_CLASS =
  * Gets the base url (up to and including the domain) from a url string.
  */
 export function getBaseUrl (url) {
-  const a = document.createElement('a')
-  a.href = url
-  return a.origin
+  const [proto, _, base] = url.split('/') // eslint-disable-line
+  return `${proto}//${base}`
 }
 
 /**
@@ -49,6 +48,13 @@ export function registerBookmarkType (solidProfile) {
 /**
  * Figure out where the user's bookmarks are stored.
  */
+export function loadBookmarksUrl (solidProfile) {
+  return solidProfile.loadTypeRegistry(web)
+    .then(updatedProfile => {
+      return getBookmarksUrl(updatedProfile)
+    })
+}
+
 export function getBookmarksUrl (solidProfile) {
   const bookmarksUrls = solidProfile.typeRegistryForClass(BOOKMARK_RDF_CLASS)
     .map(registration => registration.locationUri)

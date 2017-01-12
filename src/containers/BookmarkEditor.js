@@ -105,7 +105,7 @@ export class BookmarkEditor extends React.Component {
 
     const isPublic = {listed: true}
     let bookmarkModel = model
-      .setAny('url', this.state.formData.url, isPublic)
+      .setAny('url', this.state.formData.url, {...isPublic, namedNode: true})
       .setAny('title', this.state.formData.title, isPublic)
       .setAny('description', this.state.formData.description, isPublic)
       .setAny('archived', this.state.formData.archived, isPublic)

@@ -30,5 +30,5 @@ export function bookmarkModelFactory (webId) {
     description: vocab.dc('description'),
     tags: vocab.bookmark('hasTopic'),
     archived: vocab.solid('read')
-  })(graph, subject).setAny('type', 'http://www.w3.org/2002/01/bookmark#Bookmark', {listed: true})
+  })(graph, subject).setAny('type', 'http://www.w3.org/2002/01/bookmark#Bookmark', {listed: true, namedNode: true})
 }

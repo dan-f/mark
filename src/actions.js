@@ -32,19 +32,25 @@ export function maybeInstallAppResources (solidProfile) {
 
 export function registerBookmarks (solidProfile) {
   return dispatch => {
-    const bookmarksUrl = utils.getBookmarksUrl(solidProfile)
-    if (bookmarksUrl) {
-      return Promise.resolve(bookmarksUrl)
-    }
-    dispatch(registerBookmarksRequest())
-    return utils.registerBookmarkType(solidProfile)
-      .then(updatedProfile => {
-        const updatedBookmarksUrl = utils.getBookmarksUrl(updatedProfile)
-        dispatch(registerBookmarksSuccess(updatedBookmarksUrl))
-        return updatedBookmarksUrl
+    return utils.loadBookmarksUrl(solidProfile)
+      .then(bookmarksUrl => {
+        if (bookmarksUrl) {
+          return bookmarksUrl
+        }
+        dispatch(registerBookmarksRequest())
+        return utils.registerBookmarkType(solidProfile)
+          .then(updatedProfile => {
+            const updatedBookmarksUrl = utils.getBookmarksUrl(updatedProfile)
+            dispatch(registerBookmarksSuccess(updatedBookmarksUrl))
+            return updatedBookmarksUrl
+          })
+          .catch(error => {
+            error._message = 'Could not register bookmarks in the type index'
+            throw error
+          })
       })
       .catch(error => {
-        dispatch(setError('Could not register bookmarks in the type index'))
+        dispatch(setError(error._message || 'Could not load the type index'))
         throw error
       })
   }
@@ -198,7 +204,7 @@ export function cancelEdit (bookmark) {
   }
 }
 
-function createNew (webId) {
+export function createNew (webId) {
   return {
     type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
     bookmark: bookmarkModelFactory(webId)(rdflib.graph(), `#${uuid.v4()}`)
