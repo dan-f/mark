@@ -45,9 +45,13 @@ export function registerBookmarks (solidProfile) {
             return updatedBookmarksUrl
           })
           .catch(error => {
-            dispatch(setError('Could not register bookmarks in the type index'))
+            error._message = 'Could not register bookmarks in the type index'
             throw error
           })
+      })
+      .catch(error => {
+        dispatch(setError(error._message || 'Could not load the type index'))
+        throw error
       })
   }
 }

@@ -65,7 +65,7 @@
     "redux-logger": "^2.7.0",
     "redux-solid-auth": "^0.2.0",
     "redux-thunk": "^2.1.0",
-    "solid-client": "^0.23.4",
+    "solid-client": "^0.23.6",
     "url-join": "^1.1.0",
     "uuid": "^2.0.3",
     "valid-url": "^1.0.9"
