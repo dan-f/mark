@@ -21,14 +21,14 @@ export function solidProfileFactory () {
     foaf:primaryTopic <#me> .
 
   <#me> a <http://xmlns.com/foaf/0.1/Person> ;
-    <http://www.w3.org/ns/pim/space#preferencesFile> <https://localhost:443/Preferences/prefs.ttl> ;
-    <http://www.w3.org/ns/solid/terms#publicTypeIndex> <https://localhost:443/profile/publicTypeIndex.ttl> ;
+    <http://www.w3.org/ns/pim/space#preferencesFile> <https://localhost:8443/Preferences/prefs.ttl> ;
+    <http://www.w3.org/ns/solid/terms#publicTypeIndex> <https://localhost:8443/profile/publicTypeIndex.ttl> ;
     <http://xmlns.com/foaf/0.1/name> "Foo Bar" .
   `
   const profileGraph = rdflib.graph()
-  rdflib.parse(profileTurtle, profileGraph, 'https://localhost:443/profile/card', 'text/turtle')
+  rdflib.parse(profileTurtle, profileGraph, 'https://localhost:8443/profile/card', 'text/turtle')
   const solidProfile = new SolidProfile(
-    'https://localhost:443/profile/card',
+    'https://localhost:8443/profile/card',
     profileGraph,
     rdflib,
     web

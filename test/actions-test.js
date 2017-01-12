@@ -27,7 +27,7 @@ describe('Actions', () => {
 
   describe('maybeInstallAppResources', () => {
     it('registers bookmarks in the type index and sets the bookmarks url', () => {
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .get('/profile/publicTypeIndex.ttl')
@@ -43,16 +43,16 @@ describe('Actions', () => {
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:443/mark/bookmarks.ttl' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks.ttl' },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS },
-            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:443/mark/bookmarks.ttl' }
+            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/mark/bookmarks.ttl' }
           ])
         })
     })
 
     it('fires an app error if the bookmarks resource cannot be found', () => {
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .get('/profile/publicTypeIndex.ttl')
@@ -66,7 +66,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:443/mark/bookmarks.ttl' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks.ttl' },
             { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not find the bookmarks file' }
           ])
         })
@@ -81,19 +81,19 @@ describe('Actions', () => {
           solid:instance </path/to/bookmarks.ttl> .
       `
 
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(200, typeRegistryTurtle + registration, { 'Content-Type': 'text/turtle' })
 
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .then(bookmarksUrl => {
-          expect(bookmarksUrl).to.equal('https://localhost:443/path/to/bookmarks.ttl')
+          expect(bookmarksUrl).to.equal('https://localhost:8443/path/to/bookmarks.ttl')
           expect(store.getActions()).to.eql([])
         })
     })
 
     it('registers bookmarks in the type index if no registration exists', () => {
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .get('/profile/publicTypeIndex.ttl')
@@ -103,7 +103,7 @@ describe('Actions', () => {
 
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .then(bookmarksUrl => {
-          const expectedBookmarksUrl = 'https://localhost:443/mark/bookmarks.ttl'
+          const expectedBookmarksUrl = 'https://localhost:8443/mark/bookmarks.ttl'
           expect(bookmarksUrl).to.equal(expectedBookmarksUrl)
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
@@ -113,7 +113,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if the bookmarks type index registration fails', () => {
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .patch('/profile/publicTypeIndex.ttl')
@@ -129,7 +129,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if the type index fails to load', () => {
-      nock('https://localhost:443/')
+      nock('https://localhost:8443/')
         .get('/profile/publicTypeIndex.ttl')
         .reply(500)
 
@@ -143,9 +143,36 @@ describe('Actions', () => {
   })
 
   describe('createBookmarksResource', () => {
-    it('creates the bookmarks solid resource')
+    it('creates the bookmarks solid resource', () => {
+      nock('https://localhost:8443/')
+        .put('/path/to/bookmarks.ttl')
+        .reply(200)
 
-    it('fires an app error if the creation fails')
+      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks.ttl'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
+            { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS }
+          ])
+        })
+    })
+
+    it('fires an app error if the creation fails', () => {
+      nock('https://localhost:8443/')
+        .put('/path/to/bookmarks.ttl')
+        .reply(500)
+
+      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks.ttl'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
+            {
+              type: AT.BOOKMARKS_ERROR_SET,
+              errorMessage: 'Could not create bookmarks file'
+            }
+          ])
+        })
+    })
   })
 
   describe('saveBookmark', () => {
@@ -162,7 +189,7 @@ describe('Actions', () => {
 
   describe('createNew', () => {
     it('creates a new (empty) bookmark model', () => {
-      const webId = 'https://localhost:443/profile/card#me'
+      const webId = 'https://localhost:8443/profile/card#me'
       const action = Actions.createNew(webId)
       expect(action.type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
       expect(action.bookmark.any('type')).to.equal('http://www.w3.org/2002/01/bookmark#Bookmark')
