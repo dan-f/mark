@@ -17,7 +17,7 @@ export function getBaseUrl (url) {
  * expected to reside.
  */
 export function defaultBookmarksUrl (baseUrl) {
-  return urljoin(baseUrl, 'mark', 'bookmarks.ttl')
+  return urljoin(baseUrl, 'mark', 'bookmarks')
 }
 
 /**
@@ -40,7 +40,7 @@ export function registerBookmarkType (solidProfile) {
   return solidProfile.registerType(
     BOOKMARK_RDF_CLASS,
     defaultBookmarksUrlForWebId(solidProfile.webId),
-    'instance',
+    'container',
     true
   )
 }
@@ -57,6 +57,7 @@ export function loadBookmarksUrl (solidProfile) {
 
 export function getBookmarksUrl (solidProfile) {
   const bookmarksUrls = solidProfile.typeRegistryForClass(BOOKMARK_RDF_CLASS)
+    .filter(registration => registration.locationType === 'container')
     .map(registration => registration.locationUri)
   return bookmarksUrls.length ? bookmarksUrls[0] : null
 }

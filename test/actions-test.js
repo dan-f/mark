@@ -36,19 +36,19 @@ describe('Actions', () => {
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .patch('/profile/publicTypeIndex.ttl')
         .reply(200)
-        .head('/mark/bookmarks.ttl')
+        .head('/mark/bookmarks/')
         .reply(404)
-        .put('/mark/bookmarks.ttl')
+        .post('/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.maybeInstallAppResources(solidProfile))
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks.ttl' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks/' },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS },
-            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/mark/bookmarks.ttl' }
+            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/mark/bookmarks/' }
           ])
         })
     })
@@ -61,14 +61,14 @@ describe('Actions', () => {
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .patch('/profile/publicTypeIndex.ttl')
         .reply(200)
-        .head('/mark/bookmarks.ttl')
+        .head('/mark/bookmarks/')
         .reply(500)
 
       return store.dispatch(Actions.maybeInstallAppResources(solidProfile))
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks.ttl' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks/' },
             { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not find the bookmarks file' }
           ])
         })
@@ -80,7 +80,7 @@ describe('Actions', () => {
       const registration = `
         <#registration> a solid:TypeRegistration ;
           solid:forClass bookmark:Bookmark ;
-          solid:instance </path/to/bookmarks.ttl> .
+          solid:instanceContainer </path/to/bookmarks/> .
       `
 
       nock('https://localhost:8443/')
@@ -89,7 +89,7 @@ describe('Actions', () => {
 
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .then(bookmarksUrl => {
-          expect(bookmarksUrl).to.equal('https://localhost:8443/path/to/bookmarks.ttl')
+          expect(bookmarksUrl).to.equal('https://localhost:8443/path/to/bookmarks/')
           expect(store.getActions()).to.eql([])
         })
     })
@@ -105,7 +105,7 @@ describe('Actions', () => {
 
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .then(bookmarksUrl => {
-          const expectedBookmarksUrl = 'https://localhost:8443/mark/bookmarks.ttl'
+          const expectedBookmarksUrl = 'https://localhost:8443/mark/bookmarks/'
           expect(bookmarksUrl).to.equal(expectedBookmarksUrl)
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
@@ -147,10 +147,10 @@ describe('Actions', () => {
   describe('createBookmarksResource', () => {
     it('creates the bookmarks solid resource', () => {
       nock('https://localhost:8443/')
-        .put('/path/to/bookmarks.ttl')
+        .post('/path/to/bookmarks/')
         .reply(200)
 
-      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks.ttl'))
+      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks/'))
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
@@ -161,10 +161,10 @@ describe('Actions', () => {
 
     it('fires an app error if the creation fails', () => {
       nock('https://localhost:8443/')
-        .put('/path/to/bookmarks.ttl')
+        .post('/path/to/bookmarks/')
         .reply(500)
 
-      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks.ttl'))
+      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks/'))
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
@@ -178,14 +178,14 @@ describe('Actions', () => {
   })
 
   describe('saveBookmark', () => {
-    const webId = 'https://localhost:8443/profile/card#me'
     const graph = rdflib.graph()
-    const subject = rdflib.NamedNode.fromValue('https://localhost:8443/path/to/bookmarks.ttl#SomeBookmark')
-    const bookmark = bookmarkModelFactory(webId)(graph, subject)
+    const namedGraph = 'https://localhost:8443/mark/bookmarks/bookmark.ttl'
+    const subject = rdflib.NamedNode.fromValue(`${namedGraph}#SomeBookmark`)
+    const bookmark = bookmarkModelFactory(graph, namedGraph, subject)
 
     it('saves a bookmark', () => {
       nock('https://localhost:8443/')
-        .patch('/mark/bookmarks.ttl')
+        .patch('/mark/bookmarks/bookmark.ttl')
         .reply(200)
 
       return store.dispatch(Actions.saveBookmark(bookmark))
@@ -199,7 +199,7 @@ describe('Actions', () => {
 
     it('fires an app error if the save fails', () => {
       nock('https://localhost:8443/')
-        .patch('/mark/bookmarks.ttl')
+        .patch('/mark/bookmarks/bookmark.ttl')
         .reply(500)
 
       return store.dispatch(Actions.saveBookmark(bookmark))
@@ -222,7 +222,7 @@ describe('Actions', () => {
         @prefix bookmark: <http://www.w3.org/2002/01/bookmark#> .
         @prefix dc: <http://purl.org/dc/elements/1.1/> .
 
-        <#ExampleBookmark>
+        <bookmark.ttl#ExampleBookmark>
             dc:description "An example bookmark" ;
             dc:title "Example Bookmark" ;
             a bookmark:Bookmark ;
@@ -231,33 +231,31 @@ describe('Actions', () => {
       `
 
       nock('https://localhost:8443/')
-        .get('/mark/bookmarks.ttl')
+        .get('/mark/bookmarks/*')
         .reply(200, bookmarksTurtle, { 'Content-Type': 'text/turtle' })
 
-      const webId = 'https://localhost:8443/profile/card#me'
-      const url = 'https://localhost:8443/mark/bookmarks.ttl'
+      const url = 'https://localhost:8443/mark/bookmarks/'
 
-      return store.dispatch(Actions.loadBookmarks(url, webId))
+      return store.dispatch(Actions.loadBookmarks(url))
         .then(() => {
           const actions = store.getActions()
           expect(actions.length).to.equal(2)
           expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url })
           expect(actions[1].type).to.equal(AT.BOOKMARKS_LOAD_SUCCESS)
           expect([...actions[1].bookmarks.keys()]).to.eql([
-            'https://localhost:8443/mark/bookmarks.ttl#ExampleBookmark'
+            'https://localhost:8443/mark/bookmarks/bookmark.ttl#ExampleBookmark'
           ])
         })
     })
 
     it('fires an app error if the loading fails', () => {
       nock('https://localhost:8443/')
-        .get('/mark/bookmarks.ttl')
+        .get('/mark/bookmarks/*')
         .reply(500)
 
-      const webId = 'https://localhost:8443/profile/card#me'
-      const url = 'https://localhost:8443/mark/bookmarks.ttl'
+      const url = 'https://localhost:8443/mark/bookmarks/ '
 
-      return store.dispatch(Actions.loadBookmarks(url, webId))
+      return store.dispatch(Actions.loadBookmarks(url))
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_LOAD_REQUEST, url },
@@ -272,8 +270,8 @@ describe('Actions', () => {
 
   describe('createNew', () => {
     it('creates a new (empty) bookmark model', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
-      store.dispatch(Actions.createNew(webId))
+      store = mockStoreFactory({ bookmarksUrl: 'https://localhost:8443/bookmarks/' })
+      store.dispatch(Actions.createNew())
       const actions = store.getActions()
       expect(actions.length).to.equal(1)
       expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
@@ -283,8 +281,8 @@ describe('Actions', () => {
 
   describe('createAndEditNew', () => {
     it('creates a new bookmark model and immediately edits it', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
-      store.dispatch(Actions.createAndEditNew(webId))
+      store = mockStoreFactory({ bookmarksUrl: 'https://localhost:8443/bookmarks/' })
+      store.dispatch(Actions.createAndEditNew())
       const actions = store.getActions()
       expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
       expect(actions[1].type).to.equal(AT.BOOKMARKS_EDIT_BOOKMARK)

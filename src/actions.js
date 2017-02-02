@@ -1,5 +1,6 @@
 import * as Immutable from 'immutable'
-import { rdflib, web } from 'solid-client'
+import { rdflib, web, vocab } from 'solid-client'
+import urljoin from 'url-join'
 import uuid from 'uuid'
 
 import * as ActionTypes from './actionTypes'
@@ -74,7 +75,7 @@ export function registerBookmarksSuccess (bookmarksUrl) {
 export function createBookmarksResource (url) {
   return dispatch => {
     dispatch(createBookmarksResourceRequest())
-    return web.put(url, '')
+    return web.post(url, '')
       .then(resp => dispatch(createBookmarksResourceSuccess()))
       .catch(error => {
         dispatch(setError('Could not create bookmarks file'))
@@ -127,16 +128,28 @@ export function saveBookmarkSuccess (bookmark) {
 
 // Bookmark loading
 
-export function loadBookmarks (url, ownerWebId) {
+export function loadBookmarks (containerUrl) {
   return dispatch => {
-    dispatch(loadBookmarksRequest(url))
-    return web.get(url)
+    dispatch(loadBookmarksRequest(containerUrl))
+    // This trick relies on a solid server's undocumented ability to combine all
+    // the named graphs within a container into a single graph in a single
+    // network request.
+    return web.get(urljoin(containerUrl, '*'))
       .then(solidResponse => {
         const bookmarksGraph = solidResponse.parsedGraph()
-        const bookmarkModel = bookmarkModelFactory(ownerWebId)
-        const bookmarks = bookmarksGraph.statements
-          .map(st => st.subject.value)
-          .map(subject => bookmarkModel(bookmarksGraph, subject))
+        const bookmarkType = rdflib.NamedNode.fromValue('http://www.w3.org/2002/01/bookmark#Bookmark')
+        const bookmarks = bookmarksGraph.match(null, vocab.rdf('type'), bookmarkType)
+          .map(st => {
+            // Need to construct graphs to reflect the actual named graphs they
+            // were scooped out of.
+            const bookmarkGraph = rdflib.graph()
+            const namedGraph = rdflib.NamedNode.fromValue(st.subject.value.split('#')[0])
+            bookmarksGraph.statementsMatching(st.subject)
+              .forEach(s => {
+                bookmarkGraph.add(s.subject, s.predicate, s.object, namedGraph)
+              })
+            return bookmarkModelFactory(bookmarkGraph, namedGraph, st.subject.value)
+          })
           .reduce((map, model) => {
             return map.set(model.subject.value, {model, isEditing: false})
           }, Immutable.Map())
@@ -204,17 +217,27 @@ export function cancelEdit (bookmark) {
   }
 }
 
-export function createNew (webId) {
-  return {
-    type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
-    bookmark: bookmarkModelFactory(webId)(rdflib.graph(), `#${uuid.v4()}`)
+export function createNew () {
+  return (dispatch, getState) => {
+    const { bookmarksUrl } = getState()
+    const bookmarkUrl = urljoin(bookmarksUrl, uuid.v4())
+    return dispatch(newBookmark(bookmarkUrl))
   }
 }
 
-export function createAndEditNew (webId) {
+export function createAndEditNew () {
   return dispatch => {
-    const {bookmark} = dispatch(createNew(webId))
+    const {bookmark} = dispatch(createNew())
     dispatch(edit(bookmark))
+  }
+}
+
+function newBookmark (bookmarkUrl) {
+  return {
+    type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
+    bookmark: bookmarkModelFactory(
+      rdflib.graph(), bookmarkUrl, `${bookmarkUrl}#bookmark`
+    )
   }
 }
 
