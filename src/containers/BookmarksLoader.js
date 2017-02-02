@@ -9,9 +9,9 @@ import Header from '../components/Header'
 
 class BookmarksLoader extends React.Component {
   componentDidMount () {
-    const {actions, webId} = this.props
+    const {actions} = this.props
     const {bookmarksUrl} = this.props.params
-    actions.loadBookmarks(bookmarksUrl, webId)
+    actions.loadBookmarks(bookmarksUrl)
   }
 
   render () {
@@ -25,16 +25,10 @@ class BookmarksLoader extends React.Component {
   }
 }
 
-function mapStateToProps (state) {
-  return {
-    webId: state.auth.webId
-  }
-}
-
 function mapDispatchToProps (dispatch) {
   return {
     actions: bindActionCreators(Actions, dispatch)
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(BookmarksLoader)
+export default connect(null, mapDispatchToProps)(BookmarksLoader)

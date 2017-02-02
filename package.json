@@ -58,7 +58,7 @@
   "dependencies": {
     "immutable": "^3.8.1",
     "lodash": "^4.16.4",
-    "modelld": "^0.10.0",
+    "modelld": "^0.11.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-redux": "^4.4.5",
@@ -67,7 +67,7 @@
     "redux-logger": "^2.7.0",
     "redux-solid-auth": "^0.2.0",
     "redux-thunk": "^2.1.0",
-    "solid-client": "^0.23.6",
+    "solid-client": "^0.23.7",
     "url-join": "^1.1.0",
     "uuid": "^2.0.3",
     "valid-url": "^1.0.9"
