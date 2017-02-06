@@ -25,8 +25,11 @@ export default function BookmarkListItem ({ title, url, tags, comments, onClickE
         </div>
       </div>
       <div className='bookmark-actions row'>
-        <div className='bookmark-edit col-xs-12'>
+        <div className='bookmark-edit col-xs-6'>
           <button type='button' className='btn btn-secondary' onClick={onClickEdit}>Edit</button>
+        </div>
+        <div className='bookmark-edit col-xs-6' style={{textAlign: 'right'}}>
+          <button type='button' className='btn btn-link'>Share</button>
         </div>
       </div>
     </li>
