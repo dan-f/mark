@@ -61,3 +61,7 @@ export function getBookmarksUrl (solidProfile) {
     .map(registration => registration.locationUri)
   return bookmarksUrls.length ? bookmarksUrls[0] : null
 }
+
+export function withoutHashFragment (url) {
+  return url.split('#')[0]
+}

@@ -1,34 +1,35 @@
 import React from 'react'
 
-import BookmarkListItem from './BookmarkListItem'
+import Bookmark from './Bookmark'
+import ListGroup from './ListGroup'
+import ListItem from './ListItem'
 import BookmarkEditor from '../containers/BookmarkEditor'
 
-export default function BookmarksList ({ bookmarks, handleCancelEditing, handleClickEdit, handleSelectTag }) {
+export default function BookmarksList ({ bookmarks, handleCancelEditing, handleClickEdit, handleClickShare, handleSelectTag }) {
   return (
-    <div className='row'>
-      <div className='col-xs-12'>
-        <ul className='list-group'>
-          {bookmarks.map(bookmark =>
-              bookmark.isEditing
-                ? <li className='list-group-item' key={bookmark.model.any('url')}>
-                  <BookmarkEditor
-                    key={bookmark.model.any('url')}
-                    model={bookmark.model}
-                    handleCancel={handleCancelEditing(bookmark.model)}
-                  />
-                </li>
-                : <BookmarkListItem
-                  key={bookmark.model.any('url')}
-                  title={bookmark.model.any('title')}
-                  url={bookmark.model.any('url')}
-                  tags={bookmark.model.get('tags')}
-                  comments={bookmark.model.any('description')}
-                  onClickEdit={handleClickEdit(bookmark.model)}
-                  handleSelectTag={handleSelectTag}
-                />
-            )}
-        </ul>
-      </div>
-    </div>
+    <ListGroup>
+      {bookmarks.map(bookmark => {
+        const model = bookmark.get('model')
+        return bookmark.get('isEditing')
+          ? <ListItem key={model.any('url')}>
+            <BookmarkEditor
+              key={model.any('url')}
+              model={model}
+              handleCancel={handleCancelEditing(model)}
+            />
+          </ListItem>
+          : <ListItem key={model.any('url')}>
+            <Bookmark
+              title={model.any('title')}
+              url={model.any('url')}
+              tags={model.get('tags')}
+              comments={model.any('description')}
+              onClickEdit={handleClickEdit(model)}
+              onClickShare={handleClickShare(model)}
+              handleSelectTag={handleSelectTag}
+            />
+          </ListItem>
+      })}
+    </ListGroup>
   )
 }

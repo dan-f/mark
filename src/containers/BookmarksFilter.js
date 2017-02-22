@@ -19,8 +19,8 @@ export class BookmarksFilter extends React.Component {
 
   getTags () {
     return this.props.bookmarks
-      .map(bookmark => bookmark.model)
-      .map(bookmark => bookmark.get('tags'))
+      .map(bookmark => bookmark.get('model'))
+      .map(model => model.get('tags'))
       .reduce((allTags, curTags) => {
         return [...allTags, ...curTags]
       }, [])

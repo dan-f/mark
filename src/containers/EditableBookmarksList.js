@@ -12,15 +12,16 @@ export class EditableBookmarksList extends React.Component {
     this.onClickEditBookmark = this.onClickEditBookmark.bind(this)
     this.onClickCancelEditing = this.onClickCancelEditing.bind(this)
     this.handleSelectTag = this.handleSelectTag.bind(this)
+    this.handleClickShare = this.handleClickShare.bind(this)
   }
 
   getVisibleBookmarks () {
     const { bookmarks, selectedTags, showArchived } = this.props
     return bookmarks.filter(bookmark => {
-      const model = bookmark.model
+      const model = bookmark.get('model')
       const tagInFilters = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
       const fulfillsArchiveFilter = showArchived ? true : !model.any('archived')
-      const isNotNew = !bookmark.isNew
+      const isNotNew = !bookmark.get('isNew')
       return tagInFilters && fulfillsArchiveFilter && isNotNew
     }).valueSeq()
   }
@@ -49,12 +50,20 @@ export class EditableBookmarksList extends React.Component {
     }
   }
 
+  handleClickShare (bookmarkModel) {
+    const {actions} = this.props
+    return (event) => {
+      actions.loadAndEditPermissions(bookmarkModel)
+    }
+  }
+
   render () {
     return (
       <BookmarksList
         bookmarks={this.getVisibleBookmarks()}
         handleCancelEditing={this.onClickCancelEditing}
         handleClickEdit={this.onClickEditBookmark}
+        handleClickShare={this.handleClickShare}
         handleSelectTag={this.handleSelectTag}
       />
     )

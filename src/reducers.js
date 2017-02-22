@@ -5,35 +5,40 @@ import auth from 'redux-solid-auth/lib/reducers'
 import * as ActionTypes from './actionTypes'
 
 export function bookmarks (state = Immutable.Map(), action) {
+  const subject = action.bookmark && action.bookmark.subject && action.bookmark.subject.value
   switch (action.type) {
     case ActionTypes.BOOKMARKS_LOAD_SUCCESS:
       return action.bookmarks
     case ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS:
-      return state.set(action.bookmark.subject.value, {
-        model: action.bookmark,
-        isEditing: false,
-        isNew: false
-      })
-    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL:
-      return state.get(action.bookmark.subject.value).isNew
-        ? state.remove(action.bookmark.subject.value)
-        : state.set(action.bookmark.subject.value, {
+      return state.mergeDeep({
+        [subject]: {
           model: action.bookmark,
           isEditing: false,
           isNew: false
-        })
-    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK:
-      return state.set(action.bookmark.subject.value, {
-        model: action.bookmark,
-        isEditing: true,
-        isNew: state.get(action.bookmark.subject.value).isNew
+        }
       })
+    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL:
+      return state.get(subject).isNew
+        ? state.remove(subject)
+        : state.setIn([subject, 'isEditing'], false)
+    case ActionTypes.BOOKMARKS_EDIT_BOOKMARK:
+      return state.setIn([subject, 'isEditing'], true)
     case ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK:
-      return state.set(action.bookmark.subject.value, {
+      return state.set(subject, {
         model: action.bookmark,
         isEditing: false,
         isNew: true
       })
+    case ActionTypes.BOOKMARKS_LOAD_AUTHORIZATIONS_SUCCESS:
+      return state.setIn([subject, 'authorizations'], action.authorizations)
+    case ActionTypes.BOOKMARKS_EDIT_PERMISSIONS:
+      return state.setIn([subject, 'isEditingPermissions'], true)
+    case ActionTypes.BOOKMARKS_CANCEL_EDIT_PERMISSIONS:
+      return state.setIn([subject, 'isEditingPermissions'], false)
+    case ActionTypes.BOOKMARKS_SAVE_PERMISSIONS_SUCCESS:
+      return state
+        .setIn([subject, 'authorizations'], action.authorizations)
+        .setIn([subject, 'isEditingPermissions'], false)
     default:
       return state
   }

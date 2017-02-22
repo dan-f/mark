@@ -6,7 +6,7 @@ import uuid from 'uuid'
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
 
-import { bookmarkModelFactory } from './models'
+import { authorizationModelFactory, bookmarkModelFactory } from './models'
 
 // Bookmark application install
 
@@ -143,7 +143,7 @@ export function loadBookmarks (containerUrl) {
             // Need to construct graphs to reflect the actual named graphs they
             // were scooped out of.
             const bookmarkGraph = rdflib.graph()
-            const namedGraph = rdflib.NamedNode.fromValue(st.subject.value.split('#')[0])
+            const namedGraph = rdflib.NamedNode.fromValue(utils.withoutHashFragment(st.subject.value))
             bookmarksGraph.statementsMatching(st.subject)
               .forEach(s => {
                 bookmarkGraph.add(s.subject, s.predicate, s.object, namedGraph)
@@ -151,7 +151,7 @@ export function loadBookmarks (containerUrl) {
             return bookmarkModelFactory(bookmarkGraph, namedGraph, st.subject.value)
           })
           .reduce((map, model) => {
-            return map.set(model.subject.value, {model, isEditing: false})
+            return map.set(model.subject.value, Immutable.Map({model, isEditing: false}))
           }, Immutable.Map())
         dispatch(loadBookmarksSuccess(bookmarks))
         return bookmarksGraph
@@ -261,5 +261,117 @@ export function showArchived (shown) {
   return {
     type: ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED,
     shown
+  }
+}
+
+// Sharing
+
+export function loadAndEditPermissions (bookmark) {
+  return dispatch => {
+    dispatch(loadAuthorizations(bookmark))
+      .then(() => dispatch(editPermissions(bookmark)))
+  }
+}
+
+export function loadAuthorizations (bookmark) {
+  return (dispatch, getState) => {
+    dispatch(loadAuthorizationsRequest(bookmark))
+    return web.head(bookmark.subject.value)
+      .then(resp => {
+        const aclUrl = resp.linkHeaders.acl[0]
+        return web.get(aclUrl)
+          .then(aclResp => aclResp.parsedGraph())
+          .catch(error => {
+            if (error.code === 404) {
+              return rdflib.graph()
+            } else {
+              throw error
+            }
+          })
+          .then(parsedGraph => {
+            const graphName = utils.withoutHashFragment(bookmark.subject.value)
+            const resource = rdflib.NamedNode.fromValue(graphName)
+            const authorizations = parsedGraph
+              .match(null, vocab.acl('accessTo'), resource)
+              .map(st => authorizationModelFactory(parsedGraph, aclUrl, st.subject.value))
+            // Create a default authorization making this user the owner
+            if (!authorizations.length) {
+              const ownerAuth = authorizationModelFactory(parsedGraph, aclUrl, urljoin(aclUrl, uuid.v4()))
+                .setAny('agent', getState().auth.webId, {namedNode: true})
+                .add('accessTo', graphName, {namedNode: true})
+                .add('accessTo', aclUrl, {namedNode: true})
+                .add('mode', vocab.acl('Read').value, {namedNode: true})
+                .add('mode', vocab.acl('Write').value, {namedNode: true})
+                .add('mode', vocab.acl('Control').value, {namedNode: true})
+              authorizations.push(ownerAuth)
+            }
+            return dispatch(loadAuthorizationsSuccess(bookmark, Immutable.fromJS(authorizations)))
+          })
+      })
+      .catch(error => {
+        dispatch(setError('Could not load the bookmark permissions'))
+        throw error
+      })
+  }
+}
+
+export function editPermissions (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_EDIT_PERMISSIONS,
+    bookmark
+  }
+}
+
+export function cancelEditingPermissions (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_CANCEL_EDIT_PERMISSIONS,
+    bookmark
+  }
+}
+
+export function loadAuthorizationsRequest (bookmark) {
+  return {
+    type: ActionTypes.BOOKMARKS_LOAD_AUTHORIZATIONS_REQUEST,
+    bookmark
+  }
+}
+
+export function loadAuthorizationsSuccess (bookmark, authorizations) {
+  return {
+    type: ActionTypes.BOOKMARKS_LOAD_AUTHORIZATIONS_SUCCESS,
+    bookmark,
+    authorizations
+  }
+}
+
+export function savePermissions (bookmark) {
+  return (dispatch, getState) => {
+    const authorizations = getState().bookmarks.get(bookmark.subject.value).get('authorizations')
+    dispatch(savePermissionsRequest(bookmark))
+    Promise.all(authorizations.map(auth => auth.save(rdflib, web)).toJS())
+      .then(savedAuthorizations => {
+        dispatch(savePermissionsSuccess(bookmark, savedAuthorizations))
+        return Immutable.fromJS(savedAuthorizations)
+      })
+      .catch(error => {
+        dispatch(setError('Could not share your bookmark'))
+        throw error
+      })
+  }
+}
+
+export function savePermissionsRequest (bookmark, authorizations) {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_PERMISSIONS_REQUEST,
+    bookmark,
+    authorizations
+  }
+}
+
+export function savePermissionsSuccess (bookmark, authorizations) {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_PERMISSIONS_SUCCESS,
+    bookmark,
+    authorizations
   }
 }

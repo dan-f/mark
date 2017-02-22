@@ -5,7 +5,7 @@ import { Link } from 'react-router'
 export function BookmarksWelcome ({ personalBookmarksUrl }) {
   return (
     <div className='row'>
-      <div className='col-xs-12'>
+      <div className='col'>
         <Link to={personalBookmarksUrl}>View your bookmarks</Link>
       </div>
     </div>
