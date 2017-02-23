@@ -20,7 +20,7 @@ export default function BookmarksFilterControls ({
           <form className='form-inline' onSubmit={event => event.preventDefault()}>
             <div className='form-group'>
               <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
-              <div className={'dropdown ' + (tagFilterInput && matchingTags.size ? 'open' : '')}>
+              <div className={'dropdown ' + (tagFilterInput && matchingTags.size ? 'show' : '')}>
                 <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={tagFilterInput} autoComplete='off' onChange={handleTagFilterInput} />
                 <div className='dropdown-menu'>
                   {matchingTags.map(tag =>

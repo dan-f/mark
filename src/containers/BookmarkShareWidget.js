@@ -7,6 +7,7 @@ import * as Actions from '../actions'
 import ListGroup from '../components/ListGroup'
 import ListItem from '../components/ListItem'
 import Modal from '../components/Modal'
+import Typeahead from '../components/Typeahead'
 
 class Authorization extends React.Component {
   constructor (props) {
@@ -103,13 +104,20 @@ export class BookmarkShareWidget extends React.Component {
       <ReactTransitionGroup component='div'>
         {editingPermissions
           ? <Modal title={`Share "${bookmark.any('title')}"`} onClickCancel={this.handleClickCancel(bookmark)} onClickSave={this.handleClickSave(bookmark)}>
-            <ListGroup>
-              {authorizations.map(authorization =>
-                <ListItem key={authorization.subject.value}>
-                  <Authorization authorization={authorization} currentUserWebId={webId} />
-                </ListItem>
-              )}
-            </ListGroup>
+            <div className='d-flex flex-column'>
+              <Typeahead
+                placeholder='Add a contact or WebID'
+                items={['Daniel Friedman', 'Andrei Sambra']}
+                handleSelectItem={item => event => console.log('you selected:', item)}
+              />
+              <ListGroup>
+                {authorizations.map(authorization =>
+                  <ListItem key={authorization.subject.value}>
+                    <Authorization authorization={authorization} currentUserWebId={webId} />
+                  </ListItem>
+                )}
+              </ListGroup>
+            </div>
           </Modal>
           : null
         }
