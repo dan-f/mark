@@ -5,27 +5,40 @@ export const BOOKMARK_RDF_CLASS =
   rdflib.namedNode('http://www.w3.org/2002/01/bookmark#Bookmark')
 
 /**
- * Gets the base url (up to and including the domain) from a url string.
+ * Returns the URL of the container for application data
+ * @param {String} baseUrl the url of profile storage
  */
-export function getBaseUrl (url) {
-  const [proto, _, base] = url.split('/') // eslint-disable-line
-  return `${proto}//${base}`
+export function appDataContainer (storageUrl) {
+  return urljoin(storageUrl, 'application-data')
+}
+
+/**
+ * Returns the url to the container for mark app data
+ * @param {String} storageUrl the url of profile storage
+ */
+export function markDataContainer (storageUrl) {
+  return urljoin(appDataContainer(storageUrl), 'mark')
 }
 
 /**
  * Given the base url of a user's solid server, describes where bookmarks are
  * expected to reside.
  */
-export function defaultBookmarksUrl (baseUrl) {
-  return urljoin(baseUrl, 'mark', 'bookmarks')
+export function defaultBookmarksUrl (storageUrl) {
+  return urljoin(markDataContainer(storageUrl), 'bookmarks')
 }
 
 /**
  * Given a user's webId, get the URL to the resource where bookmarks are
  * expected to reside.
  */
-export function defaultBookmarksUrlForWebId (webId) {
-  return defaultBookmarksUrl(getBaseUrl(webId))
+export function defaultBookmarksUrlForProfile (solidProfile) {
+  const storageLocations = solidProfile.storage
+  if (!storageLocations.length) {
+    throw new Error('Profile missing a storage location')
+  }
+  // TODO: prompt the user for which location they want to use - https://github.com/dan-f/mark/issues/16
+  return defaultBookmarksUrl(storageLocations[0])
 }
 
 /**
@@ -39,7 +52,7 @@ export function registerApp (solidProfile) {}
 export function registerBookmarkType (solidProfile) {
   return solidProfile.registerType(
     BOOKMARK_RDF_CLASS,
-    defaultBookmarksUrlForWebId(solidProfile.webId),
+    defaultBookmarksUrlForProfile(solidProfile),
     'container',
     true
   )

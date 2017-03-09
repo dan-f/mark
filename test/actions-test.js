@@ -36,19 +36,19 @@ describe('Actions', () => {
         .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
         .patch('/profile/publicTypeIndex.ttl')
         .reply(200)
-        .head('/mark/bookmarks/')
+        .head('/application-data/mark/bookmarks/')
         .reply(404)
-        .post('/mark/bookmarks/')
+        .post('/application-data/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.maybeInstallAppResources(solidProfile))
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks/' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/application-data/mark/bookmarks/' },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
             { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS },
-            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/mark/bookmarks/' }
+            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/application-data/mark/bookmarks/' }
           ])
         })
     })
@@ -68,7 +68,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/mark/bookmarks/' },
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/application-data/mark/bookmarks/' },
             { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not find the bookmarks file' }
           ])
         })
@@ -105,7 +105,7 @@ describe('Actions', () => {
 
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .then(bookmarksUrl => {
-          const expectedBookmarksUrl = 'https://localhost:8443/mark/bookmarks/'
+          const expectedBookmarksUrl = 'https://localhost:8443/application-data/mark/bookmarks/'
           expect(bookmarksUrl).to.equal(expectedBookmarksUrl)
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },

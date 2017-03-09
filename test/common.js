@@ -22,6 +22,7 @@ export function solidProfileFactory () {
 
   <#me> a <http://xmlns.com/foaf/0.1/Person> ;
     <http://www.w3.org/ns/pim/space#preferencesFile> <https://localhost:8443/Preferences/prefs.ttl> ;
+    <http://www.w3.org/ns/pim/space#storage> <https://localhost:8443/> ;
     <http://www.w3.org/ns/solid/terms#publicTypeIndex> <https://localhost:8443/profile/publicTypeIndex.ttl> ;
     <http://xmlns.com/foaf/0.1/name> "Foo Bar" .
   `
