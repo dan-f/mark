@@ -1,5 +1,5 @@
 import * as Immutable from 'immutable'
-import { rdflib, web, vocab } from 'solid-client'
+import { getProfile, rdflib, web, vocab } from 'solid-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
 
@@ -10,9 +10,9 @@ import { authorizationModelFactory, bookmarkModelFactory } from './models'
 
 // Bookmark application install
 
-export function maybeInstallAppResources (solidProfile) {
+export function maybeInstallAppResources () {
   return dispatch => {
-    return dispatch(registerBookmarks(solidProfile))
+    return dispatch(registerBookmarks())
       .then(bookmarksUrl => {
         return web.head(bookmarksUrl)
           .catch(error => {
@@ -31,15 +31,16 @@ export function maybeInstallAppResources (solidProfile) {
   }
 }
 
-export function registerBookmarks (solidProfile) {
-  return dispatch => {
-    return utils.loadBookmarksUrl(solidProfile)
+export function registerBookmarks () {
+  return (dispatch, getState) => {
+    const { profile } = getState()
+    return utils.loadBookmarksUrl(profile)
       .then(bookmarksUrl => {
         if (bookmarksUrl) {
           return bookmarksUrl
         }
         dispatch(registerBookmarksRequest())
-        return utils.registerBookmarkType(solidProfile)
+        return utils.registerBookmarkType(profile)
           .then(updatedProfile => {
             const updatedBookmarksUrl = utils.getBookmarksUrl(updatedProfile)
             dispatch(registerBookmarksSuccess(updatedBookmarksUrl))
@@ -373,5 +374,68 @@ export function savePermissionsSuccess (bookmark, authorizations) {
     type: ActionTypes.BOOKMARKS_SAVE_PERMISSIONS_SUCCESS,
     bookmark,
     authorizations
+  }
+}
+
+// Social
+
+export function loadProfile (webId) {
+  return dispatch => {
+    return getProfile(webId)
+      .then(solidProfile => solidProfile.loadTypeRegistry())
+      .then(solidProfile => dispatch(loadProfileSuccess(solidProfile)))
+      .catch(error => {
+        dispatch(setError('Could not load your profile'))
+        throw error
+      })
+  }
+}
+
+export function loadProfileSuccess (profile) {
+  return {
+    type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+    profile
+  }
+}
+
+export function loadContacts () {
+  return (dispatch, getState) => {
+    const { profile } = getState()
+    const typeIndexGraph = profile.typeIndexListed.graph
+    // Query variables
+    const query = new rdflib.Query()
+    const v = val => rdflib.variable(val)
+    const typeRegistration = v('typeRegistration')
+    const addressBookResource = v('addressBookResource')
+    const addressBook = v('addressBook')
+    const nameEmailIndexResource = v('nameEmailIndexResource')
+    const vcardContact = v('vcardContact')
+    const url = v('url')
+
+    query.pat.add(typeRegistration, vocab.rdf('type'), vocab.solid('TypeRegistration'))
+    query.pat.add(typeRegistration, vocab.solid('forClass'), vocab.vcard('AddressBook'))
+    query.pat.add(typeRegistration, vocab.solid('instance'), addressBookResource)
+    query.pat.add(addressBook, vocab.vcard('nameEmailIndex'), nameEmailIndexResource)
+    query.pat.add(vcardContact, vocab.vcard('inAddressBook'), addressBook)
+    query.pat.add(vcardContact, vocab.vcard('hasURL'), url)
+    query.pat.add(url, vocab.vcard('type'), vocab.vcard('WebID'))
+
+    const onResult = function () {
+      console.log('onResult handler called with arguments:')
+      console.log(arguments)
+      console.log(typeIndexGraph)
+    }
+    const onDone = function () {
+      console.log('onDone handler called with arguments:')
+      console.log(arguments)
+      console.log(typeIndexGraph)
+    }
+    typeIndexGraph.query(query, onResult, new rdflib.Fetcher(typeIndexGraph), onDone)
+
+    // const addressBookRegistrations = profile.typeRegistryForClass(vocab.vcard('AddressBook'))
+    // const addressBookUrl = addressBookRegistrations.length
+    //   ? addressBookRegistrations[0].locationUri
+    //   : null
+    // if (addressBookUrl) {}
   }
 }

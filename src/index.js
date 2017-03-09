@@ -7,7 +7,7 @@ import { authenticate } from 'redux-solid-auth/lib/actions'
 import thunkMiddleware from 'redux-thunk'
 import { getProfile } from 'solid-client'
 
-import { maybeInstallAppResources } from './actions'
+import { loadProfile, loadContacts, maybeInstallAppResources } from './actions'
 import App from './containers/App'
 import rootReducer from './reducers'
 
@@ -19,9 +19,9 @@ if (process.env.NODE_ENV === 'development') {
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
 store.dispatch(authenticate())
-  .then(webId => getProfile(webId))
-  .then(solidProfile => solidProfile.loadTypeRegistry())
-  .then(solidProfile => store.dispatch(maybeInstallAppResources(solidProfile)))
+  .then(webId => store.dispatch(loadProfile(webId)))
+  .then(solidProfile => store.dispatch(maybeInstallAppResources()))
+  .then(solidProfile => store.dispatch(loadContacts()))
   .catch(error => console.log(error))
 
 function render (AppComponent) {

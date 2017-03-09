@@ -1,0 +1,42 @@
+Loading contacts
+
+1) Look in the type registry for a solid:instance with solid:forClass vcard:AddressBook
+2) Dereference that resource
+3) Look for the addressbook with vcard:nameEmailIndex <someresource>
+4) Dereference that resource
+
+Here's how it would look as a swaddle query
+
+[
+  {
+    _from: typeRegistryURI,
+    _type: solid.TypeRegistration,
+    [solid.forClass]: vcard.AddressBook
+  },
+  solid.instance, [
+    vcard.nameEmailIndex, [
+      vcard.fn
+    ]
+  ]
+]
+
+- to know which resources to load:
+  - (static):
+    - parse query for:
+      - the _from property of the params
+  - (dynamic):
+    - when an edge resolves to a vertex which is a name not in the current graph set, load that name
+
+
+
+where
+  _from: typeRegistryURI
+  _type: solid.TypeRegistration
+  [solid.forClass]: vcard.AddressBook
+
+get
+  solid.instance {
+    vcard.nameEmailIndex {
+      vcard.fn
+    }
+  }

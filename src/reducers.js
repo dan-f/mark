@@ -4,6 +4,15 @@ import auth from 'redux-solid-auth/lib/reducers'
 
 import * as ActionTypes from './actionTypes'
 
+export function profile (state = {}, action) {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS:
+      return action.profile
+    default:
+      return state
+  }
+}
+
 export function bookmarks (state = Immutable.Map(), action) {
   const subject = action.bookmark && action.bookmark.subject && action.bookmark.subject.value
   switch (action.type) {
@@ -88,6 +97,7 @@ export function error (state = '', action) {
 
 export default combineReducers({
   auth,
+  profile,
   bookmarks,
   bookmarksUrl,
   filters,

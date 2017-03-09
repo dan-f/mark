@@ -27,7 +27,7 @@ export default class Typeahead extends React.Component {
     return (
       <form onSubmit={event => event.preventDefault()}>
         <div className={'dropdown ' + (matchingItems.length ? 'show' : '')}>
-          <input type='text' className='form-control' autocomplete='off' placeholder={placeholder} value={inputText} onChange={this.handleChangeInput} />
+          <input type='text' className='form-control' autoComplete='off' placeholder={placeholder} value={inputText} onChange={this.handleChangeInput} />
           <div className='dropdown-menu'>
             {matchingItems.map(item =>
               <button key={item} type='button' className='dropdown-item' onClick={handleSelectItem(item)}>
