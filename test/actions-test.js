@@ -1,8 +1,10 @@
 /* eslint-env mocha */
+const path = require('path')
+
 import nock from 'nock'
 import { rdflib } from 'solid-client'
 
-import { expect, mockStoreFactory, solidProfileFactory } from './common'
+import { expect, mockStoreFactory, profileTurtle, solidProfileFactory } from './common'
 import * as Actions from '../src/actions'
 import * as AT from '../src/actionTypes'
 import { bookmarkModelFactory } from '../src/models'
@@ -20,7 +22,7 @@ describe('Actions', () => {
 
   beforeEach(() => {
     solidProfile = solidProfileFactory()
-    store = mockStoreFactory()
+    store = mockStoreFactory({ profile: solidProfileFactory() })
   })
 
   afterEach(() => {
@@ -333,6 +335,80 @@ describe('Actions', () => {
         { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: true },
         { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: false }
       ])
+    })
+  })
+
+  describe('checkProfile/login', () => {
+    // Right now, based on how WebId-TLS auth works, the checkProfile and
+    // login actions work the exact same way
+    ;[ Actions.checkProfile, Actions.login ].forEach(action => {
+      it('gets the profile of the logged-in user (functionally equivalent to logging in with webid-tls)', () => {
+        const webId = 'https://localhost:8443/profile/card#me'
+        nock('https://localhost:8443/')
+          .head('/')
+          .reply(200, '', { user: webId })
+          .get('/profile/card')
+          .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
+
+        return store.dispatch(action({
+          authEndpoint: 'https://localhost:8443/',
+          cert: path.join(__dirname, '/data/cert.pem'),
+          key: path.join(__dirname, '/data/key.pem')
+        })).then(() => {
+          const [ authRequest, authSuccess, loadProfileRequest, loadProfileSuccess ] = store.getActions()
+          expect(authRequest).to.eql({ type: 'AUTH_REQUEST' })
+          expect(authSuccess).to.eql({
+            type: 'AUTH_SUCCESS',
+            webId: 'https://localhost:8443/profile/card#me'
+          })
+          expect(loadProfileRequest).to.eql({ type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST })
+          expect(loadProfileSuccess.type).to.equal(AT.BOOKMARKS_LOAD_PROFILE_SUCCESS)
+          expect(loadProfileSuccess.profile.parsedGraph.statements)
+            .to.eql(solidProfileFactory().parsedGraph.statements)
+        })
+      })
+
+      it('resolves to null if it cannot log in', () => {
+        nock('https://localhost:8443/')
+          .head('/')
+          .reply(500)
+
+        nock('https://databox.me/')
+          .head('/')
+          .reply(500)
+
+        return store.dispatch(action({
+          authEndpoint: 'https://localhost:8443/',
+          cert: path.join(__dirname, '/data/cert.pem'),
+          key: path.join(__dirname, '/data/key.pem')
+        })).then(webId => {
+          expect(webId).to.be.null
+        })
+      })
+
+      it('throws an error if loading the profile fails', () => {
+        const webId = 'https://localhost:8443/profile/card#me'
+        nock('https://localhost:8443/')
+          .head('/')
+          .reply(200, '', { user: webId })
+          .get('/profile/card')
+          .reply(500)
+
+        return store.dispatch(action({
+          authEndpoint: 'https://localhost:8443/',
+          cert: path.join(__dirname, '/data/cert.pem'),
+          key: path.join(__dirname, '/data/key.pem')
+        })).catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: 'AUTH_REQUEST' },
+            { type: 'AUTH_SUCCESS',
+              webId: 'https://localhost:8443/profile/card#me' },
+            { type: 'BOOKMARKS_LOAD_PROFILE_REQUEST' },
+            { type: 'BOOKMARKS_ERROR_SET',
+              errorMessage: 'Couldn\'t load your profile' }
+          ])
+        })
+      })
     })
   })
 })

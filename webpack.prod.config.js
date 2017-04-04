@@ -8,8 +8,7 @@ config.plugins = [
     'process.env.NODE_ENV': JSON.stringify('production')
   }),
   new webpack.optimize.UglifyJsPlugin(),
-  new webpack.optimize.OccurrenceOrderPlugin(),
-  new webpack.optimize.DedupePlugin()
+  new webpack.optimize.OccurrenceOrderPlugin()
 ]
 
 module.exports = config

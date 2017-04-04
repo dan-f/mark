@@ -4,16 +4,17 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 
-export function NewBookmarkButton ({ actions, newBookmark }) {
+export function NewBookmarkButton ({ actions, loggedIn, newBookmark }) {
   const alreadyEditing = newBookmark !== null
-  return (
-    <button type='button' className='btn btn-sm btn-outline-primary' disabled={alreadyEditing} onClick={() => actions.createAndEditNew()}>Add a new bookmark</button>
-  )
+  return loggedIn
+    ? <button type='button' className='btn btn-sm btn-outline-primary' disabled={alreadyEditing} onClick={() => actions.createAndEditNew()}>Add a new bookmark</button>
+    : <div />
 }
 
 function mapStateToProps (state) {
   const newBookmarkEntry = state.bookmarks.find(bookmark => bookmark.isNew)
   return {
+    loggedIn: !!state.auth.webId,
     newBookmark: newBookmarkEntry ? newBookmarkEntry.model : null
   }
 }

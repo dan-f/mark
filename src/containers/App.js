@@ -1,29 +1,40 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { Router, Route, hashHistory } from 'react-router'
+import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 
-import BookmarksWelcome from './BookmarksWelcome'
+import WelcomePage from '../components/WelcomePage'
+import Header from '../components/Header'
 import BookmarksLoader from './BookmarksLoader'
 
-export function App ({ webId }) {
+export default function App () {
   return (
-    webId
-      ? <div>
-        <Router history={hashHistory}>
-          <Route path='/' component={BookmarksWelcome} />
-          <Route path='/bookmarks/:bookmarksUrl' component={BookmarksLoader} />
-        </Router>
+    <Router>
+      <div>
+        <Header />
+        <Switch>
+          <Route exact path='/' component={WelcomePage} />
+          <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
+        </Switch>
       </div>
-      : <div>
-        Logging in...
-      </div>
+    </Router>
+  )
+}
+
+let ProtectedRoute = ({ component, loggedIn, ...rest }) => {
+  const renderRoute = props => (
+    loggedIn
+      ? React.createElement(component, props)
+      : <Redirect to={{ pathname: '/', state: { from: props.location } }} />
+  )
+  return (
+    <Route {...rest} render={renderRoute} />
   )
 }
 
 function mapStateToProps (state) {
   return {
-    webId: state.auth.webId
+    loggedIn: !!state.auth.webId
   }
 }
 
-export default connect(mapStateToProps)(App)
+ProtectedRoute = connect(mapStateToProps)(ProtectedRoute)

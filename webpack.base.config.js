@@ -13,7 +13,7 @@ module.exports = {
       'react',
       'react-dom',
       'react-redux',
-      'react-router',
+      'react-router-dom',
       'redux',
       'redux-logger',
       'redux-solid-auth',
@@ -24,20 +24,20 @@ module.exports = {
     ]
   },
   output: {
-    path: path.join(__dirname, '/build'),
+    path: path.join(__dirname, 'public', 'build'),
     publicPath: '/build/',
-    filename: 'bundle.js'
+    filename: '[name].bundle.js'
   },
   module: {
     loaders: [
       {
         test: /\.js$/,
         exclude: /(node_modules)/,
-        loader: 'babel'
+        loader: 'babel-loader'
       },
       {
         test: /\.json$/,
-        loader: 'json'
+        loader: 'json-loader'
       }
     ]
   },
@@ -46,6 +46,7 @@ module.exports = {
     xmlhttprequest: 'XMLHttpRequest'
   },
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js')
+    new webpack.DefinePlugin({ 'global.IS_BROWSER': true }),
+    new webpack.optimize.CommonsChunkPlugin({name: 'vendor', filename: 'vendor.bundle.js'})
   ]
 }
