@@ -3,11 +3,9 @@ import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
 import { Provider } from 'react-redux'
 import { applyMiddleware, createStore } from 'redux'
-import { authenticate } from 'redux-solid-auth/lib/actions'
 import thunkMiddleware from 'redux-thunk'
-import { getProfile } from 'solid-client'
 
-import { maybeInstallAppResources } from './actions'
+import { checkProfile } from './actions'
 import App from './containers/App'
 import rootReducer from './reducers'
 
@@ -18,11 +16,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
-store.dispatch(authenticate())
-  .then(webId => getProfile(webId))
-  .then(solidProfile => solidProfile.loadTypeRegistry())
-  .then(solidProfile => store.dispatch(maybeInstallAppResources(solidProfile)))
-  .catch(error => console.log(error))
+store.dispatch(checkProfile())
 
 function render (AppComponent) {
   ReactDOM.render(

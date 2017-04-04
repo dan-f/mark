@@ -11,6 +11,22 @@ describe('Reducers', () => {
     expect(reducer(initialState, action)).to.eql(initialState)
   }
 
+  describe('profile', () => {
+    it('has an initially null state', () => {
+      expect(Reducers.profile(undefined, {})).to.be.null
+    })
+
+    it('updates its state on a successful profile load action', () => {
+      const profile = { foo: 'bar' }
+      expect(Reducers.profile(undefined, { type: AT.BOOKMARKS_LOAD_PROFILE_SUCCESS, profile }))
+        .to.eql(profile)
+    })
+
+    it('ignores unrecognized actions', () => {
+      testUnrecognizedAction(Reducers.profile, 'current state')
+    })
+  })
+
   describe('bookmarks', () => {
     function makeBookmark () {
       return {

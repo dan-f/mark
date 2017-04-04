@@ -42,11 +42,6 @@ export function defaultBookmarksUrlForProfile (solidProfile) {
 }
 
 /**
- * Register this app with the user's solid app registry.
- */
-export function registerApp (solidProfile) {}
-
-/**
  * Register where the user's bookmarks are stored.
  */
 export function registerBookmarkType (solidProfile) {

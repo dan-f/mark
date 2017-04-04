@@ -1,18 +1,80 @@
 import * as Immutable from 'immutable'
-import { rdflib, web, vocab } from 'solid-client'
+import { getProfile, rdflib, web, vocab } from 'solid-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
+
+import { Actions as AuthActions } from 'redux-solid-auth'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
 
 import { bookmarkModelFactory } from './models'
 
+// Authentication
+
+export const { authenticate, checkAuthenticated } = AuthActions
+
+export function checkProfile (config) {
+  return dispatch => {
+    return dispatch(checkAuthenticated(config))
+      .catch(error => {
+        dispatch(setError("Couldn't authenticate"))
+        throw error
+      })
+      .then(webId => {
+        return webId
+          ? dispatch(loadProfile(webId))
+          : null
+      })
+  }
+}
+
+export function login (config) {
+  return dispatch => {
+    return dispatch(authenticate(config))
+      .catch(error => {
+        dispatch(setError('Could not log in'))
+        throw error
+      })
+      .then(webId => {
+        return webId
+          ? dispatch(loadProfile(webId))
+          : null
+      })
+  }
+}
+
+export function loadProfile (webId) {
+  return dispatch => {
+    dispatch(loadProfileRequest())
+    return getProfile(webId)
+      .then(profile => {
+        dispatch(loadProfileSuccess(profile))
+        return profile
+      })
+      .catch(error => {
+        dispatch(setError("Couldn't load your profile"))
+        throw error
+      })
+  }
+}
+
+export function loadProfileRequest () {
+  return { type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST }
+}
+
+export function loadProfileSuccess (profile) {
+  return {
+    type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+    profile
+  }
+}
+
 // Bookmark application install
 
-export function maybeInstallAppResources (solidProfile) {
-  return dispatch => {
-    return dispatch(registerBookmarks(solidProfile))
+export function maybeInstallAppResources () {
+  return (dispatch, getState) => {
+    return dispatch(registerBookmarks())
       .then(bookmarksUrl => {
         return web.head(bookmarksUrl)
           .catch(error => {
@@ -31,15 +93,16 @@ export function maybeInstallAppResources (solidProfile) {
   }
 }
 
-export function registerBookmarks (solidProfile) {
-  return dispatch => {
-    return utils.loadBookmarksUrl(solidProfile)
+export function registerBookmarks () {
+  return (dispatch, getState) => {
+    const { profile } = getState()
+    return utils.loadBookmarksUrl(profile)
       .then(bookmarksUrl => {
         if (bookmarksUrl) {
           return bookmarksUrl
         }
         dispatch(registerBookmarksRequest())
-        return utils.registerBookmarkType(solidProfile)
+        return utils.registerBookmarkType(profile)
           .then(updatedProfile => {
             const updatedBookmarksUrl = utils.getBookmarksUrl(updatedProfile)
             dispatch(registerBookmarksSuccess(updatedBookmarksUrl))
