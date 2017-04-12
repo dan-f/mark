@@ -1,0 +1,25 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+@prefix book: <http://www.w3.org/2002/01/bookmark#> .
+
+
+<#BookmarkList> a rdfs:Resource
+  ; rdfs:isDefinedBy <./>
+  ; rdfs:label "BookmarkList"
+  ; rdfs:comment "A list of Bookmarks and BookmarkLists"
+  .
+
+<#containsBookmark> a rdf:Property
+  ; rdfs:label "containsBookmark"
+  ; rdfs:comment "The subject contains the object bookmark"
+  ; rdfs:domain <#BookmarkList>
+  ; rdfs:range book:Bookmark
+  .
+
+<#containsBookmarkList> a rdf:Property
+  ; rdfs:label "containsBookmarkList"
+  ; rdfs:comment "The subject contains the object BookmarkList"
+  ; rdfs:domain <#BookmarkList>
+  ; rdfs:range <#BookmarkList>
+  .
