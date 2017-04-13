@@ -7,7 +7,10 @@ import * as Actions from '../actions'
 export function NewBookmarkButton ({ actions, loggedIn, newBookmark }) {
   const alreadyEditing = newBookmark !== null
   return loggedIn
-    ? <button type='button' className='btn btn-sm btn-outline-primary' disabled={alreadyEditing} onClick={() => actions.createAndEditNew()}>Add a new bookmark</button>
+    ? <button type='button' className='btn btn-sm btn-outline-primary mr-2' disabled={alreadyEditing} onClick={() => actions.createAndEditNew()}>
+        <i className='fa fa-plus mr-1' aria-hidden='true'></i>
+        <span>New Bookmark</span>
+      </button>
     : <div />
 }
 

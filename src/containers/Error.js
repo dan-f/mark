@@ -4,10 +4,10 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 
-export function Error ({ error, actions }) {
+export function ErrorContainer ({ error, actions }) {
   if (error.length) {
     return (
-      <div className='alert alert-danger' role='alert'>
+      <div className='alert alert-danger mt-2' role='alert'>
         <button type='button' className='close' aria-label='Close' onClick={actions.clearError}>
           <span aria-hidden='true'>&times;</span>
         </button>
@@ -31,4 +31,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Error)
+export default connect(mapStateToProps, mapDispatchToProps)(ErrorContainer)

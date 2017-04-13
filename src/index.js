@@ -7,6 +7,7 @@ import thunkMiddleware from 'redux-thunk'
 
 import { checkProfile } from './actions'
 import App from './containers/App'
+import { Provider as TwinqlProvider } from './lib/react-twinql'
 import rootReducer from './reducers'
 
 const middlewares = [thunkMiddleware]
@@ -21,9 +22,11 @@ store.dispatch(checkProfile())
 function render (AppComponent) {
   ReactDOM.render(
     <Provider store={store}>
-      <AppContainer>
-        <AppComponent />
-      </AppContainer>
+      <TwinqlProvider endpoint={global.QUERY_ENDPOINT}>
+        <AppContainer>
+          <AppComponent />
+        </AppContainer>
+      </TwinqlProvider>
     </Provider>,
     document.getElementById('app-container')
   )

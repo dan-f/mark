@@ -2,19 +2,34 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 
+import ErrorContainer from './Error'
+
 import WelcomePage from '../components/WelcomePage'
-import Header from '../components/Header'
+import Nav from '../components/Nav'
 import BookmarksLoader from './BookmarksLoader'
 
 export default function App () {
   return (
     <Router>
       <div>
-        <Header />
-        <Switch>
-          <Route exact path='/' component={WelcomePage} />
-          <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
-        </Switch>
+        <div className='row'>
+          <div className='col'>
+            <Nav webId='https://dan-f.databox.me/profile/card#me' />
+          </div>
+        </div>
+        <div className='row'>
+          <div className='col'>
+            <ErrorContainer />
+          </div>
+        </div>
+        <div className='row'>
+          <div className='col-sm-9'>
+            <Switch>
+              <Route exact path='/' component={WelcomePage} />
+              <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
+            </Switch>
+          </div>
+        </div>
       </div>
     </Router>
   )

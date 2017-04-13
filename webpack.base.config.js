@@ -46,7 +46,8 @@ module.exports = {
     xmlhttprequest: 'XMLHttpRequest'
   },
   plugins: [
-    new webpack.DefinePlugin({ 'global.IS_BROWSER': true }),
+    new webpack.DefinePlugin({'global.IS_BROWSER': true}),
+    new webpack.DefinePlugin({'global.QUERY_ENDPOINT': '"https://databox.me/,query"'}),
     new webpack.optimize.CommonsChunkPlugin({name: 'vendor', filename: 'vendor.bundle.js'})
   ]
 }
