@@ -23,7 +23,7 @@ export default function App () {
           </div>
         </div>
         <div className='row'>
-          <div className='col-sm-9'>
+          <div className='col'>
             <Switch>
               <Route exact path='/' component={WelcomePage} />
               <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
