@@ -6,7 +6,7 @@ import ErrorContainer from './Error'
 
 import WelcomePage from '../components/WelcomePage'
 import Nav from '../components/Nav'
-import BookmarksLoader from './BookmarksLoader'
+import TwinqlBookmarksList from './TwinqlBookmarksList'
 
 export default function App () {
   return (
@@ -26,7 +26,7 @@ export default function App () {
           <div className='col'>
             <Switch>
               <Route exact path='/' component={WelcomePage} />
-              <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
+              <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={TwinqlBookmarksList} />
             </Switch>
           </div>
         </div>

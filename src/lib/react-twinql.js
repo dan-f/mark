@@ -3,7 +3,11 @@ import md5 from 'md5'
 import PropTypes from 'prop-types'
 import { createElement, Children, Component } from 'react'
 
-export function connect ({ query, mapResponseToProps, mapErrorToProps }) {
+const defaultMapResponseToProps = response => response
+
+const defaultMapErrorToProps = error => ({ '@error': error })
+
+export function connect ({ query, mapResponseToProps = defaultMapResponseToProps, mapErrorToProps = defaultMapErrorToProps }) {
   return function wrapWithConnect (WrappedComponent) {
     class ConnectedComponent extends Component {
       constructor (props, context) {
@@ -16,7 +20,11 @@ export function connect ({ query, mapResponseToProps, mapErrorToProps }) {
       componentDidMount () {
         const { queryManager } = this.context
         const queryString = query(this.props)
-        queryManager.request(queryString, this.onResponse.bind(this), this.onError.bind(this))
+        this.unsubscribe = queryManager.subscribe(queryString, this.onResponse.bind(this), this.onError.bind(this))
+      }
+
+      componentWillUnmount () {
+        this.unsubscribe()
       }
 
       onResponse (response) {
@@ -82,7 +90,7 @@ class QueryManager {
     this.queryMap = Immutable.Map()
   }
 
-  request (query, onData, onError) {
+  subscribe (query, onData, onError) {
     // Update the query map with the callbacks
     const key = this.queryKey(query)
     this.queryMap = this.queryMap.update(key, entry => {
@@ -109,6 +117,12 @@ class QueryManager {
       .catch(error => {
         this.queryMap.get(key).get('onErrorCallbacks').map(cb => cb(error))
       })
+    // Return a function for unsubscribing
+    return () => {
+      this.queryMap = this.queryMap
+        .updateIn([key, 'onDataCallbacks'], callbacks => callbacks.remove(onData))
+        .updateIn([key, 'onErrorCallbacks'], callbacks => callbacks.remove(onError))
+    }
   }
 
   queryKey (query) {
@@ -129,20 +143,3 @@ const QueryMapEntry = Immutable.Record({
   onDataCallbacks: Immutable.Set(),
   onErrorCallbacks: Immutable.Set()
 })
-
-export function findOne (...args) {
-  const found = find(...args)
-  return found && found.length > 0
-    ? found[0]
-    : null
-}
-
-export function find (...args) {
-  let response = args[0]
-  const edges = args.slice(1)
-  for (let edge of edges) {
-    if (!response) { break }
-    response = response[edge]
-  }
-  return response || null
-}
