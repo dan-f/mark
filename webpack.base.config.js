@@ -20,7 +20,8 @@ module.exports = {
       'redux-thunk',
       'url-join',
       'uuid',
-      'valid-url'
+      'valid-url',
+      'whatwg-fetch'
     ]
   },
   output: {

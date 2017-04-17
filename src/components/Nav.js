@@ -1,9 +1,8 @@
 import React from 'react'
 
 import NewBookmarkButton from '../containers/NewBookmarkButton'
-import { connect } from '../lib/react-twinql'
 
-const Nav = ({ webId, 'foaf:img': img }) =>
+export default ({ webId, 'foaf:img': img }) =>
   <nav className='navbar navbar-toggleable-md navbar-light bg-faded mb-2'>
     <button className='navbar-toggler navbar-toggler-right' type='button' data-toggle='collapse' data-target='#navbarSupportedContent' aria-controls='navbarSupportedContent' aria-expanded='false' aria-label='Toggle navigation'>
       <span className='navbar-toggler-icon' />
@@ -25,12 +24,3 @@ const Nav = ({ webId, 'foaf:img': img }) =>
       </form>
     </div>
   </nav>
-
-export default connect({
-  query: props => `
-    @prefix foaf http://xmlns.com/foaf/0.1/
-    ${props.webId} {
-      foaf:img
-    }
-  `
-})(Nav)

@@ -2,6 +2,7 @@ import Immutable from 'immutable'
 import md5 from 'md5'
 import PropTypes from 'prop-types'
 import { createElement, Children, Component } from 'react'
+import 'whatwg-fetch'
 
 const defaultMapResponseToProps = response => response
 
@@ -107,15 +108,17 @@ class QueryManager {
     })
     // Run the query and update clients
     // First, call the callbacks with the "optimistic" response, then call them with the current response.
-    const onDataCallbacks = this.queryMap.get(key).get('onDataCallbacks')
-    onDataCallbacks.map(cb => cb(this.queryMap.get(key).get('response')))
+    const cachedResponse = this.queryMap.getIn([key, 'response'])
+    const onDataCallbacks = this.queryMap.getIn([key, 'onDataCallbacks'])
+    const onErrorCallbacks = this.queryMap.getIn([key, 'onErrorCallbacks'])
+    onDataCallbacks.map(cb => cb(cachedResponse))
     this.query(query)
-      .then(response => {
-        this.queryMap = this.queryMap.update(key, entry => entry.set('response', response))
-        onDataCallbacks.map(cb => cb(response))
-      })
       .catch(error => {
-        this.queryMap.get(key).get('onErrorCallbacks').map(cb => cb(error))
+        onErrorCallbacks.map(cb => cb(error))
+      })
+      .then(response => {
+        this.queryMap = this.queryMap.setIn([key, 'response'], response)
+        onDataCallbacks.map(cb => cb(response))
       })
     // Return a function for unsubscribing
     return () => {

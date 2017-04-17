@@ -19,9 +19,9 @@ export default function BookmarksFilterControls ({
         <div className='col-sm-6'>
           <form className='form-inline' onSubmit={event => event.preventDefault()}>
             <div className='form-group'>
-              <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
-              <div className={'dropdown ' + (tagFilterInput && matchingTags.size ? 'show' : '')}>
-                <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={tagFilterInput} autoComplete='off' onChange={handleTagFilterInput} />
+              <label className='sr-only' htmlFor='tag-filter-input'>Find by tag</label>
+              <div className={'dropdown ' + (tagFilterInput && matchingTags.length ? 'show' : '')}>
+                <input type='text' className='form-control' id='tag-filter-input' placeholder='Find by tag' value={tagFilterInput} autoComplete='off' onChange={handleTagFilterInput} />
                 <div className='dropdown-menu'>
                   {matchingTags.map(tag =>
                     <button key={tag} type='button' className='dropdown-item' onClick={handleSelectTag(tag)}>{tag}</button>
@@ -36,7 +36,7 @@ export default function BookmarksFilterControls ({
           <form>
             <label className='form-check-inline custom-control custom-checkbox'>
               <input type='checkbox' className='form-check-input custom-control-input' checked={showArchived} onChange={handleShowArchived} />
-              <span className='custom-control-indicator'></span>
+              <span className='custom-control-indicator' />
               <span className='custom-control-description'>Show archived</span>
             </label>
           </form>

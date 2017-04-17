@@ -4,9 +4,9 @@ import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-d
 
 import ErrorContainer from './Error'
 
+import BookmarksPage from '../components/BookmarksPage'
 import WelcomePage from '../components/WelcomePage'
-import Nav from '../components/Nav'
-import TwinqlBookmarksList from './TwinqlBookmarksList'
+import Nav from '../twinql-containers/Nav'
 
 export default function App () {
   return (
@@ -26,7 +26,7 @@ export default function App () {
           <div className='col'>
             <Switch>
               <Route exact path='/' component={WelcomePage} />
-              <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={TwinqlBookmarksList} />
+              <ProtectedRoute exact path='/m/:bookmarksContainer(.+)/' component={BookmarksPage} />
             </Switch>
           </div>
         </div>
