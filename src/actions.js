@@ -290,8 +290,8 @@ export function createNew () {
 
 export function createAndEditNew () {
   return dispatch => {
-    const {bookmark} = dispatch(createNew())
-    dispatch(edit(bookmark))
+    const { bookmark } = dispatch(createNew())
+    return dispatch(edit(bookmark))
   }
 }
 
