@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 
 import WelcomePage from '../components/WelcomePage'
+import Footer from '../components/Footer'
 import Header from '../components/Header'
 import BookmarksLoader from './BookmarksLoader'
 
@@ -15,6 +16,7 @@ export default function App () {
           <Route exact path='/' component={WelcomePage} />
           <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
         </Switch>
+        <Footer />
       </div>
     </Router>
   )
