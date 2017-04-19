@@ -6,19 +6,22 @@ import WelcomePage from '../components/WelcomePage'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 import BookmarksLoader from './BookmarksLoader'
+import DropContainer from './DropContainer'
 
 export default function App () {
   return (
-    <Router>
-      <div>
-        <Header />
-        <Switch>
-          <Route exact path='/' component={WelcomePage} />
-          <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
-        </Switch>
-        <Footer />
-      </div>
-    </Router>
+    <DropContainer>
+      <Router>
+        <div>
+          <Header />
+          <Switch>
+            <Route exact path='/' component={WelcomePage} />
+            <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
+          </Switch>
+          <Footer />
+        </div>
+      </Router>
+    </DropContainer>
   )
 }
 
