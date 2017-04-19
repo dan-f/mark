@@ -202,22 +202,30 @@ describe('Reducers', () => {
     })
   })
 
-  describe('error', () => {
-    it('sets the error', () => {
+  describe('alerts', () => {
+    it('sets the alert', () => {
       const action = {
-        type: AT.BOOKMARKS_ERROR_SET,
-        errorMessage: 'Example error message'
+        type: AT.BOOKMARKS_ALERT_SET,
+        kind: 'danger',
+        heading: 'Uh oh',
+        message: 'Example error message'
       }
-      expect(Reducers.error('', action)).to.equal('Example error message')
+      expect(Reducers.alerts(Immutable.Map(), action).get('danger')).to.eql({
+        heading: 'Uh oh',
+        message: 'Example error message'
+      })
     })
 
-    it('clears the error', () => {
-      const action = { type: AT.BOOKMARKS_ERROR_CLEAR }
-      expect(Reducers.error('', action)).to.equal('')
+    it('clears the alert', () => {
+      const action = { type: AT.BOOKMARKS_ALERT_CLEAR, kind: 'danger' }
+      expect(Reducers.alerts(
+        Immutable.Map({ 'danger': { heading: 'a fantastic heading', message: 'the best message' } }),
+        action
+      ).get('danger')).to.be.undefined
     })
 
     it('ignores unrecognized actions', () => {
-      testUnrecognizedAction(Reducers.error, 'current state')
+      testUnrecognizedAction(Reducers.alerts, 'current state')
     })
   })
 })

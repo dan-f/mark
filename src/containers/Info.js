@@ -5,17 +5,17 @@ import { bindActionCreators } from 'redux'
 import * as Actions from '../actions'
 import Alert from '../components/Alert'
 
-const ERROR_ALERT_TYPE = 'danger'
+const INFO_ALERT_TYPE = 'info'
 
-export const Error = ({ heading, message, actions: { clearError } }) =>
-  <Alert type={ERROR_ALERT_TYPE} {...{ heading, message }} onDismiss={clearError} />
+export const Info = ({ heading, message, actions: { clearInfo } }) =>
+  <Alert type={INFO_ALERT_TYPE} {...{ heading, message }} onDismiss={clearInfo} />
 
 const mapStateToProps = state => ({
-  ...state.alerts.get(ERROR_ALERT_TYPE)
+  ...state.alerts.get(INFO_ALERT_TYPE)
 })
 
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(Actions, dispatch)
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(Error)
+export default connect(mapStateToProps, mapDispatchToProps)(Info)

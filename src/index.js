@@ -5,7 +5,7 @@ import { Provider } from 'react-redux'
 import { applyMiddleware, createStore } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 
-import { checkProfile } from './actions'
+import { login } from './actions'
 import App from './containers/App'
 import rootReducer from './reducers'
 
@@ -16,7 +16,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
-store.dispatch(checkProfile())
+store.dispatch(login())
 
 function render (AppComponent) {
   ReactDOM.render(

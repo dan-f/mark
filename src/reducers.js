@@ -79,12 +79,16 @@ export function showArchived (state = false, action) {
 
 const filters = combineReducers({selectedTags, showArchived})
 
-export function error (state = '', action) {
-  switch (action.type) {
-    case ActionTypes.BOOKMARKS_ERROR_SET:
-      return action.errorMessage
-    case ActionTypes.BOOKMARKS_ERROR_CLEAR:
-      return ''
+export function alerts (state = Immutable.Map(), action) {
+  const { type, kind, heading, message } = action
+  switch (type) {
+    case ActionTypes.BOOKMARKS_ALERT_SET:
+      return state.set(kind, {
+        heading,
+        message
+      })
+    case ActionTypes.BOOKMARKS_ALERT_CLEAR:
+      return state.delete(action.kind)
     default:
       return state
   }
@@ -96,5 +100,5 @@ export default combineReducers({
   bookmarks,
   bookmarksUrl,
   filters,
-  error
+  alerts
 })
