@@ -1,4 +1,5 @@
 import * as Immutable from 'immutable'
+import React from 'react'
 import { getProfile, rdflib, web, vocab } from 'solid-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
@@ -14,21 +15,6 @@ import { bookmarkModelFactory } from './models'
 
 export const { authenticate, checkAuthenticated } = AuthActions
 
-export function checkProfile (config) {
-  return dispatch => {
-    return dispatch(checkAuthenticated(config))
-      .catch(error => {
-        dispatch(setError("Couldn't authenticate"))
-        throw error
-      })
-      .then(webId => {
-        return webId
-          ? dispatch(loadProfile(webId))
-          : null
-      })
-  }
-}
-
 export function login (config) {
   return dispatch => {
     return dispatch(authenticate(config))
@@ -37,9 +23,18 @@ export function login (config) {
         throw error
       })
       .then(webId => {
-        return webId
-          ? dispatch(loadProfile(webId))
-          : null
+        if (webId) {
+          return dispatch(loadProfile(webId))
+        } else {
+          dispatch(setInfo({
+            heading: 'You need a WebID to log in!',
+            message: <div>
+              <p>If you're new to Solid <a href='https://solid.github.io/solid-signup/'>sign up</a> to get a WebID.</p>
+              <p>If you have a certificate and are still having trouble logging in, take a look at <a href='https://github.com/dan-f/mark/wiki/Logging-in'>this wiki</a>.</p>
+            </div>
+          }))
+          return null
+        }
       })
   }
 }
@@ -251,18 +246,28 @@ export function setBookmarksUrl (url) {
 
 // General error
 
-export function setError (errorMessage) {
-  return {
-    type: ActionTypes.BOOKMARKS_ERROR_SET,
-    errorMessage
+const _setAlert = kind => message => {
+  const action = {
+    type: ActionTypes.BOOKMARKS_ALERT_SET,
+    kind
   }
+  return typeof message === 'object'
+    ? { ...action, ...message }
+    : { ...action, heading: message }
 }
 
-export function clearError () {
-  return {
-    type: ActionTypes.BOOKMARKS_ERROR_CLEAR
-  }
-}
+const _clearAlert = kind => () => ({
+  type: ActionTypes.BOOKMARKS_ALERT_CLEAR,
+  kind
+})
+
+export const setError = _setAlert('danger')
+
+export const clearError = _clearAlert('danger')
+
+export const setInfo = _setAlert('info')
+
+export const clearInfo = _clearAlert('info')
 
 // Editing
 

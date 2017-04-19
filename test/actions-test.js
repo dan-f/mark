@@ -71,7 +71,7 @@ describe('Actions', () => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
             { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/application-data/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not find the bookmarks file' }
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not find the bookmarks file' }
           ])
         })
     })
@@ -127,7 +127,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not register bookmarks in the type index' }
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not register bookmarks in the type index' }
           ])
         })
     })
@@ -140,7 +140,7 @@ describe('Actions', () => {
       return store.dispatch(Actions.registerBookmarks(solidProfile))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_ERROR_SET, errorMessage: 'Could not load the type index' }
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not load the type index' }
           ])
         })
     })
@@ -171,8 +171,9 @@ describe('Actions', () => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
             {
-              type: AT.BOOKMARKS_ERROR_SET,
-              errorMessage: 'Could not create bookmarks file'
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: 'Could not create bookmarks file'
             }
           ])
         })
@@ -209,8 +210,9 @@ describe('Actions', () => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
             {
-              type: AT.BOOKMARKS_ERROR_SET,
-              errorMessage: 'Could not save your bookmark'
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: 'Could not save your bookmark'
             }
           ])
         })
@@ -262,8 +264,9 @@ describe('Actions', () => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_LOAD_REQUEST, url },
             {
-              type: AT.BOOKMARKS_ERROR_SET,
-              errorMessage: 'Could not load your bookmarks'
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: 'Could not load your bookmarks'
             }
           ])
         })
@@ -295,7 +298,7 @@ describe('Actions', () => {
     it('tells the app to remove the current error', () => {
       store.dispatch(Actions.clearError())
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_ERROR_CLEAR }
+        { type: AT.BOOKMARKS_ALERT_CLEAR, kind: 'danger' }
       ])
     })
   })
@@ -338,76 +341,73 @@ describe('Actions', () => {
     })
   })
 
-  describe('checkProfile/login', () => {
-    // Right now, based on how WebId-TLS auth works, the checkProfile and
-    // login actions work the exact same way
-    ;[ Actions.checkProfile, Actions.login ].forEach(action => {
-      it('gets the profile of the logged-in user (functionally equivalent to logging in with webid-tls)', () => {
-        const webId = 'https://localhost:8443/profile/card#me'
-        nock('https://localhost:8443/')
-          .head('/')
-          .reply(200, '', { user: webId })
-          .get('/profile/card')
-          .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
+  describe('login', () => {
+    it('gets the profile of the logged-in user (functionally equivalent to logging in with webid-tls)', () => {
+      const webId = 'https://localhost:8443/profile/card#me'
+      nock('https://localhost:8443/')
+        .head('/')
+        .reply(200, '', { user: webId })
+        .get('/profile/card')
+        .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
 
-        return store.dispatch(action({
-          authEndpoint: 'https://localhost:8443/',
-          cert: path.join(__dirname, '/data/cert.pem'),
-          key: path.join(__dirname, '/data/key.pem')
-        })).then(() => {
-          const [ authRequest, authSuccess, loadProfileRequest, loadProfileSuccess ] = store.getActions()
-          expect(authRequest).to.eql({ type: 'AUTH_REQUEST' })
-          expect(authSuccess).to.eql({
-            type: 'AUTH_SUCCESS',
-            webId: 'https://localhost:8443/profile/card#me'
-          })
-          expect(loadProfileRequest).to.eql({ type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST })
-          expect(loadProfileSuccess.type).to.equal(AT.BOOKMARKS_LOAD_PROFILE_SUCCESS)
-          expect(loadProfileSuccess.profile.parsedGraph.statements)
-            .to.eql(solidProfileFactory().parsedGraph.statements)
+      return store.dispatch(Actions.login({
+        authEndpoint: 'https://localhost:8443/',
+        cert: path.join(__dirname, '/data/cert.pem'),
+        key: path.join(__dirname, '/data/key.pem')
+      })).then(() => {
+        const [ authRequest, authSuccess, loadProfileRequest, loadProfileSuccess ] = store.getActions()
+        expect(authRequest).to.eql({ type: 'AUTH_REQUEST' })
+        expect(authSuccess).to.eql({
+          type: 'AUTH_SUCCESS',
+          webId: 'https://localhost:8443/profile/card#me'
         })
+        expect(loadProfileRequest).to.eql({ type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST })
+        expect(loadProfileSuccess.type).to.equal(AT.BOOKMARKS_LOAD_PROFILE_SUCCESS)
+        expect(loadProfileSuccess.profile.parsedGraph.statements)
+          .to.eql(solidProfileFactory().parsedGraph.statements)
       })
+    })
 
-      it('resolves to null if it cannot log in', () => {
-        nock('https://localhost:8443/')
-          .head('/')
-          .reply(500)
+    it('resolves to null if it cannot log in', () => {
+      nock('https://localhost:8443/')
+        .head('/')
+        .reply(500)
 
-        nock('https://databox.me/')
-          .head('/')
-          .reply(500)
+      nock('https://databox.me/')
+        .head('/')
+        .reply(500)
 
-        return store.dispatch(action({
-          authEndpoint: 'https://localhost:8443/',
-          cert: path.join(__dirname, '/data/cert.pem'),
-          key: path.join(__dirname, '/data/key.pem')
-        })).then(webId => {
-          expect(webId).to.be.null
-        })
+      return store.dispatch(Actions.login({
+        authEndpoint: 'https://localhost:8443/',
+        cert: path.join(__dirname, '/data/cert.pem'),
+        key: path.join(__dirname, '/data/key.pem')
+      })).then(webId => {
+        expect(webId).to.be.null
       })
+    })
 
-      it('throws an error if loading the profile fails', () => {
-        const webId = 'https://localhost:8443/profile/card#me'
-        nock('https://localhost:8443/')
-          .head('/')
-          .reply(200, '', { user: webId })
-          .get('/profile/card')
-          .reply(500)
+    it('throws an error if loading the profile fails', () => {
+      const webId = 'https://localhost:8443/profile/card#me'
+      nock('https://localhost:8443/')
+        .head('/')
+        .reply(200, '', { user: webId })
+        .get('/profile/card')
+        .reply(500)
 
-        return store.dispatch(action({
-          authEndpoint: 'https://localhost:8443/',
-          cert: path.join(__dirname, '/data/cert.pem'),
-          key: path.join(__dirname, '/data/key.pem')
-        })).catch(() => {
-          expect(store.getActions()).to.eql([
-            { type: 'AUTH_REQUEST' },
-            { type: 'AUTH_SUCCESS',
-              webId: 'https://localhost:8443/profile/card#me' },
-            { type: 'BOOKMARKS_LOAD_PROFILE_REQUEST' },
-            { type: 'BOOKMARKS_ERROR_SET',
-              errorMessage: 'Couldn\'t load your profile' }
-          ])
-        })
+      return store.dispatch(Actions.login({
+        authEndpoint: 'https://localhost:8443/',
+        cert: path.join(__dirname, '/data/cert.pem'),
+        key: path.join(__dirname, '/data/key.pem')
+      })).catch(() => {
+        expect(store.getActions()).to.eql([
+          { type: 'AUTH_REQUEST' },
+          { type: 'AUTH_SUCCESS',
+            webId: 'https://localhost:8443/profile/card#me' },
+          { type: 'BOOKMARKS_LOAD_PROFILE_REQUEST' },
+          { type: 'BOOKMARKS_ALERT_SET',
+            kind: 'danger',
+            heading: 'Couldn\'t load your profile' }
+        ])
       })
     })
   })

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import Error from '../containers/Error'
+import Info from '../containers/Info'
 import NewBookmarkButton from '../containers/NewBookmarkButton'
 
 export default function Header () {
@@ -19,6 +20,7 @@ export default function Header () {
       <div className='row'>
         <div className='col-xs-12'>
           <Error />
+          <Info />
         </div>
       </div>
     </div>
