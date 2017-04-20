@@ -88,5 +88,10 @@
     "exclude": [
       "test/**.js"
     ]
+  },
+  "standard": {
+    "globals": [
+      "localStorage"
+    ]
   }
 }

@@ -4,7 +4,7 @@ const path = require('path')
 import nock from 'nock'
 import { rdflib } from 'solid-client'
 
-import { expect, mockStoreFactory, profileTurtle, solidProfileFactory } from './common'
+import { expect, MockLocalStorage, mockStoreFactory, profileTurtle, solidProfileFactory } from './common'
 import * as Actions from '../src/actions'
 import * as AT from '../src/actionTypes'
 import { bookmarkModelFactory } from '../src/models'
@@ -342,7 +342,15 @@ describe('Actions', () => {
   })
 
   describe('login', () => {
-    it('gets the profile of the logged-in user (functionally equivalent to logging in with webid-tls)', () => {
+    beforeEach(() => {
+      global.localStorage = new MockLocalStorage()
+    })
+
+    afterEach(() => {
+      delete global.localStorage
+    })
+
+    it('discovers the current user and loads their profile', () => {
       const webId = 'https://localhost:8443/profile/card#me'
       nock('https://localhost:8443/')
         .head('/')
@@ -365,6 +373,41 @@ describe('Actions', () => {
         expect(loadProfileSuccess.type).to.equal(AT.BOOKMARKS_LOAD_PROFILE_SUCCESS)
         expect(loadProfileSuccess.profile.parsedGraph.statements)
           .to.eql(solidProfileFactory().parsedGraph.statements)
+      })
+    })
+
+    it('tries to discover the current user from localStorage', () => {
+      global.localStorage.setItem('mark', JSON.stringify({ webId: 'https://localhost:8443/profile/card#me' }))
+      nock('https://localhost:8443/')
+        .get('/profile/card')
+        .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
+
+      return store.dispatch(Actions.login({
+        authEndpoint: 'https://localhost:8443/',
+        cert: path.join(__dirname, '/data/cert.pem'),
+        key: path.join(__dirname, '/data/key.pem')
+      })).then(() => {
+        const actions = store.getActions()
+        expect(actions.map(act => act.type)).to.eql([AT.BOOKMARKS_LOAD_PROFILE_REQUEST, AT.BOOKMARKS_LOAD_PROFILE_SUCCESS])
+        expect(localStorage.getItem).to.have.been.calledWith('mark')
+      })
+    })
+
+    it('alerts the user if an error occurs during authentication', () => {
+      nock('https://localhost:8443/')
+        .head('/')
+        .socketDelay(0)
+
+      nock('https://databox.me/')
+        .head('/')
+        .socketDelay(0)
+
+      return store.dispatch(Actions.login({
+        authEndpoint: 'https://localhost:8443/',
+        cert: path.join(__dirname, '/data/cert.pem'),
+        key: path.join(__dirname, '/data/key.pem')
+      })).catch(() => {
+        expect(store.getActions().map(act => act.type)).to.eql(['AUTH_REQUEST', 'AUTH_FAILURE', 'BOOKMARKS_ALERT_SET'])
       })
     })
 
@@ -409,6 +452,21 @@ describe('Actions', () => {
             heading: 'Couldn\'t load your profile' }
         ])
       })
+    })
+  })
+
+  describe('saveWebId', () => {
+    /*
+      In the index.js, a listener is set up to save the latest webId in
+      localstorage.  Hence firing an auth success action is all it takes to
+      'save' a webId for the returning user.
+    */
+    it('creates an auth success action with the given webId', () => {
+      const webId = 'https://localhost:8443/profile/card#me'
+      store.dispatch(Actions.saveWebId(webId))
+      expect(store.getActions()).to.eql(
+        [{ type: 'AUTH_SUCCESS', webId }]
+      )
     })
   })
 })
