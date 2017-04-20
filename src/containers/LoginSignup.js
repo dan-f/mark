@@ -17,7 +17,7 @@ export class LoginSignup extends React.Component {
     return (
       <div>
         <button type='button' className='btn btn-outline-primary' onClick={this.bootstrap}>Log In</button>
-        <a href='https://solid.github.io/solid-signup/' className='btn btn-default'>Sign Up</a>
+        <a href='https://solid.github.io/solid-signup/' target='_blank' className='btn btn-default'>Sign Up</a>
       </div>
     )
   }

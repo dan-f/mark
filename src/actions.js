@@ -29,8 +29,8 @@ export function login (config) {
           dispatch(setInfo({
             heading: 'You need a WebID to log in!',
             message: <div>
-              <p>If you're new to Solid <a href='https://solid.github.io/solid-signup/'>sign up</a> to get a WebID.</p>
-              <p>If you have a certificate and are still having trouble logging in, take a look at <a href='https://github.com/dan-f/mark/wiki/Logging-in'>this wiki</a>.</p>
+              <p>If you're new to Solid <a href='https://solid.github.io/solid-signup/' target='_blank'>sign up</a> to get a WebID.</p>
+              <p>If you have a certificate and are still having trouble logging in, take a look at <a href='https://github.com/dan-f/mark/wiki/Logging-in' target='_blank'>this wiki</a>.</p>
             </div>
           }))
           return null
