@@ -5,6 +5,8 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 
+import SignupButton from './SignupButton'
+
 export class LoginSignup extends React.Component {
   constructor (props) {
     super(props)
@@ -17,7 +19,7 @@ export class LoginSignup extends React.Component {
     return (
       <div>
         <button type='button' className='btn btn-outline-primary' onClick={this.bootstrap}>Log In</button>
-        <a href='https://solid.github.io/solid-signup/' target='_blank' className='btn btn-default'>Sign Up</a>
+        <SignupButton />
       </div>
     )
   }

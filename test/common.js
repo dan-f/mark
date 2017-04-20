@@ -1,6 +1,7 @@
 import chai from 'chai'
 import configureMockStore from 'redux-mock-store'
 import thunkMiddleware from 'redux-thunk'
+import sinon from 'sinon'
 import sinonChai from 'sinon-chai'
 import { rdflib, web } from 'solid-client'
 import SolidProfile from 'solid-client/lib/solid/profile'
@@ -10,6 +11,27 @@ export const { expect } = chai
 
 export function mockStoreFactory (initialState = {}) {
   return configureMockStore([ thunkMiddleware ])(initialState)
+}
+
+export class MockLocalStorage {
+  constructor () {
+    this.store = {
+      mark: '{ "webid": null }'
+    }
+
+    this.getItem = sinon.spy(this, 'getItem')
+    this.setItem = sinon.spy(this, 'setItem')
+  }
+
+  getItem (key) {
+    return this.store[key] || null
+  }
+
+  setItem (key, val) {
+    this.store[key] = typeof val === 'string'
+      ? val
+      : JSON.stringify(val)
+  }
 }
 
 export const profileTurtle = `

@@ -11,13 +11,23 @@ import * as utils from './utils'
 
 import { bookmarkModelFactory } from './models'
 
+import SignupButton from './containers/SignupButton'
+
 // Authentication
 
-export const { authenticate, checkAuthenticated } = AuthActions
+export const { authenticate } = AuthActions
+
+export function saveWebId (webId) {
+  return AuthActions.success(webId)
+}
 
 export function login (config) {
   return dispatch => {
-    return dispatch(authenticate(config))
+    const { webId } = JSON.parse(localStorage.getItem('mark'))
+    const getWebId = webId
+      ? Promise.resolve(webId)
+      : dispatch(AuthActions.authenticate(config))
+    return getWebId
       .catch(error => {
         dispatch(setError('Could not log in'))
         throw error
@@ -29,7 +39,7 @@ export function login (config) {
           dispatch(setInfo({
             heading: 'You need a WebID to log in!',
             message: <div>
-              <p>If you're new to Solid <a href='https://solid.github.io/solid-signup/' target='_blank'>sign up</a> to get a WebID.</p>
+              <p><SignupButton className='p-a-0' /> for a WebID if you're new to Solid.</p>
               <p>If you have a certificate and are still having trouble logging in, take a look at <a href='https://github.com/dan-f/mark/wiki/Logging-in' target='_blank'>this wiki</a>.</p>
             </div>
           }))
