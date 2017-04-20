@@ -13,11 +13,15 @@ import { bookmarkModelFactory } from './models'
 
 // Authentication
 
-export const { authenticate, checkAuthenticated } = AuthActions
+export const { authenticate } = AuthActions
 
 export function login (config) {
   return dispatch => {
-    return dispatch(authenticate(config))
+    const { webId } = JSON.parse(localStorage.getItem('mark'))
+    const getWebId = webId
+      ? Promise.resolve(dispatch(AuthActions.success(webId)).webId)
+      : dispatch(AuthActions.authenticate(config))
+    return getWebId
       .catch(error => {
         dispatch(setError('Could not log in'))
         throw error

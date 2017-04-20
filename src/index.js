@@ -16,7 +16,19 @@ if (process.env.NODE_ENV === 'development') {
 }
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
-store.dispatch(login())
+if (!localStorage.getItem('mark')) {
+  localStorage.setItem('mark', JSON.stringify({ webId: null }))
+}
+
+store.subscribe(() => {
+  const webId = store.getState().auth.webId
+  localStorage.setItem('mark', JSON.stringify({ webId }))
+})
+
+const { webId } = JSON.parse(localStorage.getItem('mark'))
+if (webId) {
+  store.dispatch(login())
+}
 
 function render (AppComponent) {
   ReactDOM.render(
