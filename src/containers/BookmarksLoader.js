@@ -8,8 +8,9 @@ import NewBookmarkEditor from './NewBookmarkEditor'
 
 class BookmarksLoader extends React.Component {
   componentDidMount () {
-    const {actions} = this.props
-    const {bookmarksUrl} = this.props.match.params
+    const { actions } = this.props
+    const { bookmarksUrl } = this.props.match.params
+    actions.setBookmarksContainerUrl(bookmarksUrl)
     actions.loadBookmarks(bookmarksUrl)
   }
 

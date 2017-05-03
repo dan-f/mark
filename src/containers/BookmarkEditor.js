@@ -1,4 +1,4 @@
-import defaults from 'lodash/defaults'
+import Immutable from 'immutable'
 import React from 'react'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
@@ -14,30 +14,13 @@ export class BookmarkEditor extends React.Component {
     this.handleFormFieldChange = this.handleFormFieldChange.bind(this)
     this.processTagsInput = this.processTagsInput.bind(this)
     this.processArchivedInput = this.processArchivedInput.bind(this)
+    this.processUriInput = this.processUriInput.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
   }
 
-  get defaultFormData () {
-    return {
-      url: '',
-      title: '',
-      description: '',
-      tags: [],
-      archived: false
-    }
-  }
-
-  get initialFormData () {
-    return defaults(
-      {
-        url: this.props.model.any('url'),
-        title: this.props.model.any('title'),
-        description: this.props.model.any('description'),
-        tags: this.props.model.get('tags'),
-        archived: this.props.model.any('archived')
-      },
-      this.defaultFormData
-    )
+  get initialBookmark () {
+    const { bookmark } = this.props
+    return bookmark.get('data')
   }
 
   afterSubmit () {
@@ -46,26 +29,26 @@ export class BookmarkEditor extends React.Component {
   }
 
   getCleanState () {
+    const { bookmark } = this.props
     return {
-      formData: this.initialFormData,
-      rawTagsInput: this.props.model.get('tags').join(', '),
+      bookmark: this.initialBookmark,
+      rawTagsInput: bookmark.getIn(['data', 'book:hasTopic']).join(', '),
       isValid: false
     }
   }
 
-  isFormDataValid (formData) {
-    return isUri(formData.url) && formData.title.length > 0
+  isBookmarkValid (bookmark) {
+    return isUri(bookmark.getIn(['book:recalls', '@id'])) && bookmark.get('dc:title').length > 0 &&
+      !this.props.bookmark.get('data').equals(bookmark)
   }
 
   handleFormFieldChange (fieldName, processEvent = event => event.target.value) {
     return (event) => {
-      const formData = {
-        ...this.state.formData,
-        [fieldName]: processEvent(event)
-      }
+      const bookmark = this.state.bookmark
+        .merge({ [fieldName]: processEvent(event) })
       this.setState({
-        isValid: this.isFormDataValid(formData),
-        formData
+        isValid: this.isBookmarkValid(bookmark),
+        bookmark
       })
     }
   }
@@ -73,18 +56,24 @@ export class BookmarkEditor extends React.Component {
   processTagsInput (event) {
     // rawTagsInput is a list of comma separated tags
     const rawTagsInput = event.target.value
-    this.setState({
-      ...this.state,
+    this.setState({ rawTagsInput })
+    return Immutable.List(
       rawTagsInput
-    })
-    return rawTagsInput
-      .split(',')
-      .filter(tag => tag.length > 0)
-      .map(tag => tag.trim())
+        .split(',')
+        .filter(tag => tag.length > 0)
+        .map(tag => tag.trim())
+      )
   }
 
   processArchivedInput (event) {
-    return event.target.checked
+    return {
+      '@value': JSON.stringify(event.target.checked),
+      '@type': 'http://www.w3.org/2001/XMLSchema#boolean'
+    }
+  }
+
+  processUriInput (event) {
+    return { '@id': event.target.value }
   }
 
   handleSubmit (event) {
@@ -93,53 +82,28 @@ export class BookmarkEditor extends React.Component {
       return
     }
 
-    const {model} = this.props
-    const {saveBookmark} = this.props.actions
-
-    // I don't like how imperative this code is.  It would be really nice to
-    // describe these operations as a query.
-    const tagFieldsToRemove = model.fields('tags')
-      .filter(tagField => !this.state.formData.tags.includes(tagField.value))
-    const tagsToAdd = this.state.formData.tags
-      .filter(tag => !model.get('tags').includes(tag))
-
-    const isPublic = {listed: true}
-    let bookmarkModel = model
-      .setAny('url', this.state.formData.url, {...isPublic, namedNode: true})
-      .setAny('title', this.state.formData.title, isPublic)
-      .setAny('description', this.state.formData.description, isPublic)
-      .setAny('archived', this.state.formData.archived, isPublic)
-    bookmarkModel = tagsToAdd.reduce(
-      (model, tag) => bookmarkModel.add('tags', tag, isPublic),
-      bookmarkModel
-    )
-    bookmarkModel = tagFieldsToRemove.reduce(
-      (model, tagField) => bookmarkModel.remove(tagField),
-      bookmarkModel
-    )
-
-    saveBookmark(bookmarkModel)
-      .then(this.setState(this.getCleanState()))
-      .catch(err => {
-        console.log(err)
-      })
+    const { bookmark } = this.props
+    const { saveBookmark } = this.props.actions
+    const original = bookmark.get('data')
+    const updated = this.state.bookmark
+    saveBookmark(original, updated, bookmark.get('isNew'))
 
     this.afterSubmit()
   }
 
   render () {
     const props = {
-      title: this.state.formData.title,
-      url: this.state.formData.url,
+      title: this.state.bookmark.get('dc:title'),
+      url: this.state.bookmark.getIn(['book:recalls', '@id']),
       tags: this.state.rawTagsInput,
-      description: this.state.formData.description,
-      archived: this.state.formData.archived,
+      description: this.state.bookmark.get('dc:description'),
+      archived: JSON.parse(this.state.bookmark.getIn(['solid:read', '@value'])),
       isValid: this.state.isValid,
-      handleChangeTitle: this.handleFormFieldChange('title'),
-      handleChangeUrl: this.handleFormFieldChange('url'),
-      handleChangeTags: this.handleFormFieldChange('tags', this.processTagsInput),
-      handleChangeDescription: this.handleFormFieldChange('description'),
-      handleChangeArchived: this.handleFormFieldChange('archived', this.processArchivedInput),
+      handleChangeTitle: this.handleFormFieldChange('dc:title'),
+      handleChangeUrl: this.handleFormFieldChange('book:recalls', this.processUriInput),
+      handleChangeTags: this.handleFormFieldChange('book:hasTopic', this.processTagsInput),
+      handleChangeDescription: this.handleFormFieldChange('dc:description'),
+      handleChangeArchived: this.handleFormFieldChange('solid:read', this.processArchivedInput),
       handleSubmit: this.handleSubmit,
       handleCancel: this.props.handleCancel
     }

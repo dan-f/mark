@@ -8,18 +8,16 @@ module.exports = {
     app: './index',
     vendor: [
       'immutable',
-      'lodash',
-      'modelld',
       'react',
       'react-dom',
       'react-redux',
       'react-router-dom',
       'redux',
       'redux-logger',
-      'redux-solid-auth',
       'redux-thunk',
       'url-join',
       'uuid',
+      'isomorphic-fetch',
       'valid-url'
     ]
   },
@@ -40,10 +38,6 @@ module.exports = {
         loader: 'json-loader'
       }
     ]
-  },
-  externals: {
-    xhr2: 'XMLHttpRequest',
-    xmlhttprequest: 'XMLHttpRequest'
   },
   plugins: [
     new webpack.DefinePlugin({ 'global.IS_BROWSER': true }),

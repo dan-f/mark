@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 
-import WelcomePage from '../components/WelcomePage'
+import LoginContainer from './LoginContainer'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
 import BookmarksLoader from './BookmarksLoader'
@@ -15,7 +15,7 @@ export default function App () {
         <div>
           <Header />
           <Switch>
-            <Route exact path='/' component={WelcomePage} />
+            <Route exact path='/' component={LoginContainer} />
             <ProtectedRoute path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
           </Switch>
           <Footer />
@@ -38,7 +38,7 @@ let ProtectedRoute = ({ component, loggedIn, ...rest }) => {
 
 function mapStateToProps (state) {
   return {
-    loggedIn: !!state.auth.webId
+    loggedIn: (state.auth.webId && state.auth.key)
   }
 }
 

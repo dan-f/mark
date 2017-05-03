@@ -1,127 +1,199 @@
+/* global fetch */
 import * as Immutable from 'immutable'
-import React from 'react'
-import { getProfile, rdflib, web, vocab } from 'solid-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
-
-import { Actions as AuthActions } from 'redux-solid-auth'
+import 'isomorphic-fetch'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
 
-import { bookmarkModelFactory } from './models'
-
-import SignupButton from './containers/SignupButton'
+const PREFIX_CONTEXT = {
+  rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+  book: 'http://www.w3.org/2002/01/bookmark#',
+  dc: 'http://purl.org/dc/elements/1.1/',
+  ldp: 'http://www.w3.org/ns/ldp#',
+  pim: 'http://www.w3.org/ns/pim/space#',
+  solid: 'http://www.w3.org/ns/solid/terms#'
+}
 
 // Authentication
 
-export const { authenticate } = AuthActions
-
-export function saveWebId (webId) {
-  return AuthActions.success(webId)
-}
-
-export function login (config) {
-  return dispatch => {
-    const { webId } = JSON.parse(localStorage.getItem('mark'))
-    const getWebId = webId
-      ? Promise.resolve(webId)
-      : dispatch(AuthActions.authenticate(config))
-    return getWebId
-      .catch(error => {
-        dispatch(setError('Could not log in'))
-        throw error
-      })
-      .then(webId => {
-        if (webId) {
-          return dispatch(loadProfile(webId))
-        } else {
-          dispatch(setInfo({
-            heading: 'You need a WebID to log in!',
-            message: <div>
-              <p><SignupButton className='p-a-0' /> for a WebID if you're new to Solid.</p>
-              <p>If you have a certificate and are still having trouble logging in, take a look at <a href='https://github.com/dan-f/mark/wiki/Logging-in' target='_blank'>this wiki</a>.</p>
-            </div>
-          }))
-          return null
-        }
-      })
-  }
-}
-
-export function loadProfile (webId) {
-  return dispatch => {
-    dispatch(loadProfileRequest())
-    return getProfile(webId)
-      .then(profile => {
-        dispatch(loadProfileSuccess(profile))
-        return profile
-      })
-      .catch(error => {
-        dispatch(setError("Couldn't load your profile"))
-        throw error
-      })
-  }
-}
-
-export function loadProfileRequest () {
-  return { type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST }
-}
-
-export function loadProfileSuccess (profile) {
+export function saveCredentials ({ webId, key }) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
-    profile
+    type: ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
+    webId,
+    key
+  }
+}
+
+// Twinql
+
+export function twinql (query) {
+  return (dispatch, getState) => {
+    const { endpoints: { twinql }, auth: { key } } = getState()
+    return fetch(twinql, {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain', 'Authorization': `Bearer ${key}` },
+      body: query
+    }).then(response => response.json())
+  }
+}
+
+// Endpoints
+
+export function findEndpoints (url) {
+  return dispatch => {
+    const solidTerms = term =>
+      `https://solid.github.io/vocab/solid-terms.ttl#${term}`
+    return fetch(url, { method: 'OPTIONS' })
+      .then(utils.checkStatus)
+      .then(response => {
+        const linkHeaders = utils.parseLinkHeader(response.headers.get('link'))
+        const getTerm = term => linkHeaders[solidTerms(term + 'Endpoint')][0]
+        return dispatch(saveEndpoints({
+          login: getTerm('login'),
+          logout: getTerm('logout'),
+          proxy: getTerm('proxy'),
+          twinql: getTerm('twinql')
+        }))
+      })
+      .catch(error => {
+        dispatch(setError(`Couldn't find data needed to log in`))
+        throw error
+      })
+  }
+}
+
+export function saveEndpoints (endpoints) {
+  return {
+    type: ActionTypes.BOOKMARKS_SAVE_ENDPOINTS,
+    endpoints
+  }
+}
+
+export function clearEndpoints (endpoints) {
+  return {
+    type: ActionTypes.BOOKMARKS_CLEAR_ENDPOINTS
   }
 }
 
 // Bookmark application install
 
 export function maybeInstallAppResources () {
+  return (dispatch, getState) =>
+    dispatch(getBookmarksContainer())
+      .then(bookmarksContainer =>
+        bookmarksContainer || dispatch(createBookmarksContainer())
+          .then(bookmarksContainer => dispatch(registerBookmarksContainer(bookmarksContainer)))
+      )
+      .then(bookmarksContainer => dispatch(setBookmarksContainerUrl(bookmarksContainer)))
+}
+
+export function getBookmarksContainer () {
   return (dispatch, getState) => {
-    return dispatch(registerBookmarks())
-      .then(bookmarksUrl => {
-        return web.head(bookmarksUrl)
-          .catch(error => {
-            if (error.code === 404) {
-              return dispatch(createBookmarksResource(bookmarksUrl))
-            }
-            dispatch(setError('Could not find the bookmarks file'))
-            throw error
-          })
-          .then(() => bookmarksUrl)
-      })
-      .then(bookmarksUrl => {
-        dispatch(setBookmarksUrl(bookmarksUrl))
-        return bookmarksUrl
-      })
+    const { auth: { webId } } = getState()
+    return dispatch(twinql(`
+      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
+      @prefix solid http://www.w3.org/ns/solid/terms#
+      @prefix book  http://www.w3.org/2002/01/bookmark#
+      ${webId} {
+        solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
+          solid:instanceContainer
+        }
+      }
+    `)).then(response => {
+      const error = response['@error'] || response['solid:publicTypeIndex']['@error']
+      if (error) {
+        throw new Error(error.message)
+      }
+      const matchingRegistrations = response['solid:publicTypeIndex']['@graph']
+      return matchingRegistrations.length
+        ? matchingRegistrations[0]['solid:instanceContainer']['@id']
+        : null
+    }).catch(error => {
+      dispatch(setError(`Couldn't find your Mark installation`))
+      throw error
+    })
   }
 }
 
-export function registerBookmarks () {
+export function createBookmarksContainer () {
   return (dispatch, getState) => {
-    const { profile } = getState()
-    return utils.loadBookmarksUrl(profile)
-      .then(bookmarksUrl => {
-        if (bookmarksUrl) {
-          return bookmarksUrl
-        }
-        dispatch(registerBookmarksRequest())
-        return utils.registerBookmarkType(profile)
-          .then(updatedProfile => {
-            const updatedBookmarksUrl = utils.getBookmarksUrl(updatedProfile)
-            dispatch(registerBookmarksSuccess(updatedBookmarksUrl))
-            return updatedBookmarksUrl
-          })
-          .catch(error => {
-            error._message = 'Could not register bookmarks in the type index'
-            throw error
-          })
-      })
-      .catch(error => {
-        dispatch(setError(error._message || 'Could not load the type index'))
-        throw error
-      })
+    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    dispatch(createBookmarksContainerRequest())
+    return dispatch(twinql(`
+      @prefix pim http://www.w3.org/ns/pim/space#
+      ${webId} { pim:storage }
+    `)).then(response => {
+      const error = response['@error']
+      const storage = response['pim:storage']
+      if (error) {
+        throw new Error(error.message)
+      }
+      if (!storage) {
+        throw new Error('User has no pim:storage')
+      }
+      return storage
+    }).then(storage => {
+      const bookmarksContainer = utils.defaultBookmarksUrl(storage)
+      const proxiedContainerUrl = utils.proxyUrl(proxy, bookmarksContainer, key)
+      return fetch(proxiedContainerUrl, { method: 'HEAD' })
+        .then(response =>
+          response.status >= 200 && response.status < 300
+            ? response
+            : fetch(proxiedContainerUrl, { method: 'POST' }).then(utils.checkStatus)
+        )
+        .then(() => bookmarksContainer)
+    }).then(bookmarksContainer => {
+      dispatch(createBookmarksContainerSuccess(bookmarksContainer))
+      return bookmarksContainer
+    })
+    .catch(error => {
+      dispatch(setError(`Couldn't install your bookmarks container`))
+      throw error
+    })
+  }
+}
+
+export function createBookmarksContainerRequest () {
+  return {
+    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_REQUEST
+  }
+}
+
+export function createBookmarksContainerSuccess (bookmarksContainerUrl) {
+  return {
+    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_SUCCESS,
+    bookmarksContainerUrl
+  }
+}
+
+export function registerBookmarksContainer (bookmarksContainer) {
+  return (dispatch, getState) => {
+    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    return dispatch(twinql(`
+      @prefix solid http://www.w3.org/ns/solid/terms#
+      ${webId} { solid:publicTypeIndex }
+    `)).then(response => {
+      const publicTypeIndex = response['solid:publicTypeIndex']
+      const book = 'http://www.w3.org/2002/01/bookmark#'
+      const solid = 'http://www.w3.org/ns/solid/terms#'
+      const registrationId = uuid.v4()
+      const registrationTriples = [
+        `<#${registrationId}> a <${solid}TypeRegistration> .`,
+        `<#${registrationId}> <${solid}forClass> <${book}Bookmark> .`,
+        `<#${registrationId}> <${solid}instanceContainer> <${bookmarksContainer}> .`
+      ]
+      dispatch(registerBookmarksRequest())
+      return utils.sparqlPatch(utils.proxyUrl(proxy, publicTypeIndex, key), [], registrationTriples)
+    }).then(() => {
+      dispatch(registerBookmarksSuccess(bookmarksContainer))
+      return bookmarksContainer
+    })
+    .catch(error => {
+      dispatch(setError(`Couldn't update your bookmarks type registration`))
+      throw error
+    })
   }
 }
 
@@ -138,44 +210,20 @@ export function registerBookmarksSuccess (bookmarksUrl) {
   }
 }
 
-// Create bookmarks resource
-
-export function createBookmarksResource (url) {
-  return dispatch => {
-    dispatch(createBookmarksResourceRequest())
-    return web.post(url, '')
-      .then(resp => dispatch(createBookmarksResourceSuccess()))
-      .catch(error => {
-        dispatch(setError('Could not create bookmarks file'))
-        throw error
-      })
-  }
-}
-
-export function createBookmarksResourceRequest () {
-  return {
-    type: ActionTypes.BOOKMARKS_CREATE_RESOURCE_REQUEST
-  }
-}
-
-export function createBookmarksResourceSuccess () {
-  return {
-    type: ActionTypes.BOOKMARKS_CREATE_RESOURCE_SUCCESS
-  }
-}
-
 // Add/save bookmarks
 
-export function saveBookmark (bookmark) {
-  return dispatch => {
+export function saveBookmark (original, updated, isNew) {
+  return (dispatch, getState) => {
+    const { auth: { key }, endpoints: { proxy } } = getState()
+    const grpahOf = node => node.split('#')[0]
+    const [ url, toDel, toIns ] = isNew
+      ? [ grpahOf(updated.get('@id')), [], utils.jsonLdToNT(updated, PREFIX_CONTEXT) ]
+      : [ grpahOf(original.get('@id')), ...utils.diff(original, updated, PREFIX_CONTEXT) ]
     dispatch(saveBookmarkRequest())
-    return bookmark.save(rdflib, web)
-      .then(savedBookmark => {
-        dispatch(saveBookmarkSuccess(savedBookmark))
-        return savedBookmark
-      })
+    return utils.sparqlPatch(utils.proxyUrl(proxy, url, key), isNew ? [] : toDel, toIns)
+      .then(() => dispatch(saveBookmarkSuccess(updated)))
       .catch(error => {
-        dispatch(setError('Could not save your bookmark'))
+        dispatch(setError(`Couldn't save your bookmark`))
         throw error
       })
   }
@@ -197,37 +245,38 @@ export function saveBookmarkSuccess (bookmark) {
 // Bookmark loading
 
 export function loadBookmarks (containerUrl) {
-  return dispatch => {
+  return (dispatch, getState) => {
     dispatch(loadBookmarksRequest(containerUrl))
-    // This trick relies on a solid server's undocumented ability to combine all
-    // the named graphs within a container into a single graph in a single
-    // network request.
-    return web.get(urljoin(containerUrl, '*'))
-      .then(solidResponse => {
-        const bookmarksGraph = solidResponse.parsedGraph()
-        const bookmarkType = rdflib.NamedNode.fromValue('http://www.w3.org/2002/01/bookmark#Bookmark')
-        const bookmarks = bookmarksGraph.match(null, vocab.rdf('type'), bookmarkType)
-          .map(st => {
-            // Need to construct graphs to reflect the actual named graphs they
-            // were scooped out of.
-            const bookmarkGraph = rdflib.graph()
-            const namedGraph = rdflib.NamedNode.fromValue(st.subject.value.split('#')[0])
-            bookmarksGraph.statementsMatching(st.subject)
-              .forEach(s => {
-                bookmarkGraph.add(s.subject, s.predicate, s.object, namedGraph)
-              })
-            return bookmarkModelFactory(bookmarkGraph, namedGraph, st.subject.value)
-          })
-          .reduce((map, model) => {
-            return map.set(model.subject.value, {model, isEditing: false})
-          }, Immutable.Map())
-        dispatch(loadBookmarksSuccess(bookmarks))
-        return bookmarksGraph
-      })
-      .catch(error => {
-        dispatch(setError('Could not load your bookmarks'))
-        throw error
-      })
+    return dispatch(twinql(`
+      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
+      @prefix book  http://www.w3.org/2002/01/bookmark#
+      @prefix dc    http://purl.org/dc/elements/1.1/
+      @prefix ldp   http://www.w3.org/ns/ldp#
+      @prefix solid http://www.w3.org/ns/solid/terms#
+      ${containerUrl} {
+        [ ldp:contains ] => ( rdf:type book:Bookmark ) {
+          dc:title
+          dc:description
+          book:recalls
+          solid:read
+          [ book:hasTopic ]
+        }
+      }
+    `)).then(response => {
+      if (response['@error']) {
+        throw new Error(response['@error']['message'])
+      }
+      return response
+    }).then(response => {
+      const bookmarks = response['ldp:contains']
+        .map(bookmarkResource => bookmarkResource['@graph'][0])
+        .reduce((bookmarks, bookmark) => bookmarks.set(bookmark['@id'], Immutable.fromJS(bookmark)), Immutable.Map())
+      dispatch(loadBookmarksSuccess(bookmarks))
+      return bookmarks
+    }).catch(error => {
+      dispatch(setError(`Couldn't load your bookmarks`))
+      throw error
+    })
   }
 }
 
@@ -247,7 +296,7 @@ export function loadBookmarksSuccess (bookmarks) {
 
 // Setting the bookmarks URL for the application
 
-export function setBookmarksUrl (url) {
+export function setBookmarksContainerUrl (url) {
   return {
     type: ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL,
     url
@@ -297,8 +346,8 @@ export function cancelEdit (bookmark) {
 
 export function createNew () {
   return (dispatch, getState) => {
-    const { bookmarksUrl } = getState()
-    const bookmarkUrl = urljoin(bookmarksUrl, uuid.v4())
+    const { bookmarksContainer } = getState()
+    const bookmarkUrl = urljoin(bookmarksContainer, uuid.v4())
     return dispatch(newBookmark(bookmarkUrl))
   }
 }
@@ -313,9 +362,18 @@ export function createAndEditNew () {
 function newBookmark (bookmarkUrl) {
   return {
     type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
-    bookmark: bookmarkModelFactory(
-      rdflib.graph(), bookmarkUrl, `${bookmarkUrl}#bookmark`
-    )
+    bookmark: Immutable.fromJS({
+      '@id': `${bookmarkUrl}#bookmark`,
+      'rdf:type': { '@id': 'book:Bookmark' },
+      'dc:title': '',
+      'dc:description': '',
+      'book:recalls': { '@id': '' },
+      'book:hasTopic': [],
+      'solid:read': {
+        '@value': 'false',
+        '@type': 'http://www.w3.org/2001/XMLSchema#boolean'
+      }
+    })
   }
 }
 

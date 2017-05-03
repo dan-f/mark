@@ -19,14 +19,8 @@ export class BookmarksFilter extends React.Component {
 
   getTags () {
     return this.props.bookmarks
-      .map(bookmark => bookmark.model)
-      .map(bookmark => bookmark.get('tags'))
-      .reduce((allTags, curTags) => {
-        return [...allTags, ...curTags]
-      }, [])
-      .reduce((tagSet, tag) => {
-        return tagSet.add(tag)
-      }, new Immutable.Set())
+      .map(bookmark => bookmark.getIn(['data', 'book:hasTopic']))
+      .reduce((allTags, curTags) => allTags.union(curTags), Immutable.Set())
   }
 
   handleSelectTag (tag) {

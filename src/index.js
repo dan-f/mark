@@ -5,7 +5,6 @@ import { Provider } from 'react-redux'
 import { applyMiddleware, createStore } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 
-import { login } from './actions'
 import App from './containers/App'
 import rootReducer from './reducers'
 
@@ -17,18 +16,13 @@ if (process.env.NODE_ENV === 'development') {
 const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
 if (!localStorage.getItem('mark')) {
-  localStorage.setItem('mark', JSON.stringify({ webId: null }))
+  localStorage.setItem('mark', JSON.stringify({ auth: {}, endpoints: {} }))
 }
 
 store.subscribe(() => {
-  const webId = store.getState().auth.webId
-  localStorage.setItem('mark', JSON.stringify({ webId }))
+  const { auth, endpoints } = store.getState()
+  localStorage.setItem('mark', JSON.stringify({ auth, endpoints }))
 })
-
-const { webId } = JSON.parse(localStorage.getItem('mark'))
-if (webId) {
-  store.dispatch(login())
-}
 
 function render (AppComponent) {
   ReactDOM.render(

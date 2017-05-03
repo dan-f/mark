@@ -33,7 +33,6 @@ app.use(compression())
 
 app.use(timeout('5s'))
 
-
 /*
  * (Environment variable) options:
  *   - INSECURE: When provided, runs over http
@@ -66,7 +65,7 @@ if (INSECURE) {
   }
   const options = {
     key: fs.readFileSync(TLS_KEY),
-    cert: fs.readFileSync(TLS_CERT),
+    cert: fs.readFileSync(TLS_CERT)
   }
   https.createServer(options, app).listen(PORT || 443, HOSTNAME)
 }

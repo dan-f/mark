@@ -17,30 +17,28 @@ export class EditableBookmarksList extends React.Component {
   getVisibleBookmarks () {
     const { bookmarks, selectedTags, showArchived } = this.props
     return bookmarks.filter(bookmark => {
-      const model = bookmark.model
-      const tagInFilters = selectedTags.size ? selectedTags.intersect(model.get('tags')).size > 0 : true
-      const fulfillsArchiveFilter = showArchived ? true : !model.any('archived')
-      const isNotNew = !bookmark.isNew
+      const data = bookmark.get('data')
+      const tagInFilters = selectedTags.size ? selectedTags.intersect(data.get('book:hasTopic')).size > 0 : true
+      const fulfillsArchiveFilter = showArchived
+        ? true
+        : !JSON.parse(data.getIn(['solid:read', '@value']))
+      const isNotNew = !bookmark.get('isNew')
       return tagInFilters && fulfillsArchiveFilter && isNotNew
     }).valueSeq()
   }
 
-  onClickEditBookmark (bookmarkModel) {
-    const {actions} = this.props
-    return (event) => {
-      actions.edit(bookmarkModel)
-    }
+  onClickEditBookmark (bookmark) {
+    const { actions } = this.props
+    return event => actions.edit(bookmark)
   }
 
-  onClickCancelEditing (bookmarkModel) {
-    const {actions} = this.props
-    return (event) => {
-      actions.cancelEdit(bookmarkModel)
-    }
+  onClickCancelEditing (bookmark) {
+    const { actions } = this.props
+    return event => actions.cancelEdit(bookmark)
   }
 
   handleSelectTag (tag) {
-    const {actions} = this.props
+    const { actions } = this.props
     return event => {
       if (event.type !== 'click' && !(event.type === 'keyup' && event.key === ' ')) {
         return

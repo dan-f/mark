@@ -9,21 +9,21 @@ export default function BookmarksList ({ bookmarks, handleCancelEditing, handleC
       <div className='col-xs-12'>
         <ul className='list-group'>
           {bookmarks.map(bookmark =>
-              bookmark.isEditing
-                ? <li className='list-group-item' key={bookmark.model.any('url')}>
+              bookmark.get('isEditing')
+                ? <li className='list-group-item' key={bookmark.getIn(['data', 'book:recalls', '@id'])}>
                   <BookmarkEditor
-                    key={bookmark.model.any('url')}
-                    model={bookmark.model}
-                    handleCancel={handleCancelEditing(bookmark.model)}
+                    key={bookmark.getIn(['data', 'book:recalls', '@id'])}
+                    bookmark={bookmark}
+                    handleCancel={handleCancelEditing(bookmark)}
                   />
                 </li>
                 : <BookmarkListItem
-                  key={bookmark.model.any('url')}
-                  title={bookmark.model.any('title')}
-                  url={bookmark.model.any('url')}
-                  tags={bookmark.model.get('tags')}
-                  comments={bookmark.model.any('description')}
-                  onClickEdit={handleClickEdit(bookmark.model)}
+                  key={bookmark.getIn(['data', 'book:recalls', '@id'])}
+                  title={bookmark.getIn(['data', 'dc:title'])}
+                  url={bookmark.getIn(['data', 'book:recalls', '@id'])}
+                  tags={bookmark.getIn(['data', 'book:hasTopic'])}
+                  comments={bookmark.getIn(['data', 'dc:description'])}
+                  onClickEdit={handleClickEdit(bookmark)}
                   handleSelectTag={handleSelectTag}
                 />
             )}

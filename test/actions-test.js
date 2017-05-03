@@ -1,28 +1,37 @@
 /* eslint-env mocha */
-const path = require('path')
-
+import Immutable from 'immutable'
 import nock from 'nock'
-import { rdflib } from 'solid-client'
+import { mock } from 'sinon'
 
-import { expect, MockLocalStorage, mockStoreFactory, profileTurtle, solidProfileFactory } from './common'
+import { expect, mockStoreFactory } from './common'
 import * as Actions from '../src/actions'
 import * as AT from '../src/actionTypes'
-import { bookmarkModelFactory } from '../src/models'
 
 describe('Actions', () => {
-  const typeRegistryTurtle = `
-    @prefix solid: <http://www.w3.org/ns/solid/terms#> .
-    @prefix bookmark: <http://www.w3.org/2002/01/bookmark#> .
-
-    <> a solid:ListedDocument ;
-      a solid:TypeIndex .
-  `
-  let solidProfile
+  const webId = 'https://localhost:8443/profile/card#me'
+  const key = 'abc123'
   let store
 
+  const noxy = base => {
+    const scope = nock(base)
+    const scopeProto = Object.getPrototypeOf(scope)
+    scopeProto.proxy = function (method, path, ...args) {
+      return this.intercept('/,proxy', method, ...args)
+        .query({ uri: `${this.basePath}${path}`, key })
+    }
+    return scope
+  }
+
   beforeEach(() => {
-    solidProfile = solidProfileFactory()
-    store = mockStoreFactory({ profile: solidProfileFactory() })
+    store = mockStoreFactory({
+      auth: { webId, key },
+      endpoints: {
+        login: 'https://localhost:8443/,login',
+        logout: 'https://localhost:8443/,logout',
+        proxy: 'https://localhost:8443/,proxy?uri=',
+        twinql: 'https://localhost:8443/,twinql'
+      }
+    })
   })
 
   afterEach(() => {
@@ -31,242 +40,400 @@ describe('Actions', () => {
 
   describe('maybeInstallAppResources', () => {
     it('registers bookmarks in the type index and sets the bookmarks url', () => {
-      nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .patch('/profile/publicTypeIndex.ttl')
-        .reply(200)
-        .head('/application-data/mark/bookmarks/')
+      noxy('https://localhost:8443/')
+        // Query to test whether the bookmarks container already exists
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'book': 'http://www.w3.org/2002/01/bookmark#'
+          },
+          '@id': webId,
+          'solid:publicTypeIndex': {
+            '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl',
+            '@graph': []
+          }
+        })
+        // No type registration for bookmarks, hence we're now installing the
+        // app workspace and type registration.
+        // Query to find the storage container
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@id': webId,
+          'pim:storage': 'https://localhost:8443/'
+        })
+        // HEAD to test whether the bookmarks container already exists
+        .proxy('HEAD', '/Applications/mark/bookmarks')
         .reply(404)
-        .post('/application-data/mark/bookmarks/')
+        // POST to create the bookmarks container
+        .proxy('POST', '/Applications/mark/bookmarks')
+        .reply(200)
+        // query to find the public type index
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'solid': 'http://www.w3.org/ns/solid/terms#'
+          },
+          '@id': 'https://dan-f.databox.me/profile/card#me',
+          'solid:publicTypeIndex': 'https://localhost:8443/Preferences/publicTypeIndex.ttl'
+        })
+        // PATCH to update the public type index with the bookmarks type registration
+        .proxy('PATCH', '/Preferences/publicTypeIndex.ttl')
         .reply(200)
 
-      return store.dispatch(Actions.maybeInstallAppResources(solidProfile))
+      return store.dispatch(Actions.maybeInstallAppResources())
         .then(() => {
           expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' },
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/application-data/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS },
-            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/application-data/mark/bookmarks/' }
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks' },
+            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/Applications/mark/bookmarks' }
           ])
         })
     })
 
-    it('fires an app error if the bookmarks resource cannot be found', () => {
-      nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .patch('/profile/publicTypeIndex.ttl')
-        .reply(200)
-        .head('/mark/bookmarks/')
+    it('fires an app error if the bookmarks resource cannot be created', () => {
+      noxy('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'book': 'http://www.w3.org/2002/01/bookmark#'
+          },
+          '@id': webId,
+          'solid:publicTypeIndex': {
+            '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl',
+            '@graph': []
+          }
+        })
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@id': webId,
+          'pim:storage': 'https://localhost:8443/'
+        })
+        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .reply(404)
+        .proxy('POST', '/Applications/mark/bookmarks')
         .reply(500)
 
-      return store.dispatch(Actions.maybeInstallAppResources(solidProfile))
+      return store.dispatch(Actions.maybeInstallAppResources())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/application-data/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not find the bookmarks file' }
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
           ])
         })
     })
   })
 
-  describe('registerBookmarks', () => {
-    it('respects the current bookmarks registration', () => {
-      const registration = `
-        <#registration> a solid:TypeRegistration ;
-          solid:forClass bookmark:Bookmark ;
-          solid:instanceContainer </path/to/bookmarks/> .
-      `
-
+  describe('getBookmarksContainer', () => {
+    it('finds the bookmarks container in the type registry', () => {
       nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle + registration, { 'Content-Type': 'text/turtle' })
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'book': 'http://www.w3.org/2002/01/bookmark#'
+          },
+          '@id': webId,
+          'solid:publicTypeIndex': {
+            '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl',
+            '@graph': [{
+              '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl#some-registration',
+              'solid:instanceContainer': { '@id': 'https://localhost:8443/path/to/bookmarks' }
+            }]
+          }
+        })
 
-      return store.dispatch(Actions.registerBookmarks(solidProfile))
-        .then(bookmarksUrl => {
-          expect(bookmarksUrl).to.equal('https://localhost:8443/path/to/bookmarks/')
+      return store.dispatch(Actions.getBookmarksContainer())
+        .then(containerUrl => {
+          expect(containerUrl).to.equal('https://localhost:8443/path/to/bookmarks')
           expect(store.getActions()).to.eql([])
         })
     })
 
-    it('registers bookmarks in the type index if no registration exists', () => {
+    it('may find no bookmarks container in the type registry', () => {
       nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .patch('/profile/publicTypeIndex.ttl')
-        .reply(200)
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'book': 'http://www.w3.org/2002/01/bookmark#'
+          },
+          '@id': webId,
+          'solid:publicTypeIndex': {
+            '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl',
+            '@graph': []
+          }
+        })
 
-      return store.dispatch(Actions.registerBookmarks(solidProfile))
-        .then(bookmarksUrl => {
-          const expectedBookmarksUrl = 'https://localhost:8443/application-data/mark/bookmarks/'
-          expect(bookmarksUrl).to.equal(expectedBookmarksUrl)
-          expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: expectedBookmarksUrl }
-          ])
+      return store.dispatch(Actions.getBookmarksContainer())
+        .then(containerUrl => {
+          expect(containerUrl).to.be.null
+          expect(store.getActions()).to.eql([])
         })
     })
 
-    it('fires an app error if the bookmarks type index registration fails', () => {
+    it('fires an app error if there is an error finding the registration', () => {
       nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(200, typeRegistryTurtle, { 'Content-Type': 'text/turtle' })
-        .patch('/profile/publicTypeIndex.ttl')
-        .reply(500)
-
-      return store.dispatch(Actions.registerBookmarks(solidProfile))
-        .catch(() => {
-          expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not register bookmarks in the type index' }
-          ])
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'book': 'http://www.w3.org/2002/01/bookmark#'
+          },
+          '@error': {
+            'type': 'HttpError',
+            'message': 'Internal Server Error'
+          }
         })
-    })
 
-    it('fires an app error if the type index fails to load', () => {
-      nock('https://localhost:8443/')
-        .get('/profile/publicTypeIndex.ttl')
-        .reply(500)
-
-      return store.dispatch(Actions.registerBookmarks(solidProfile))
+      return store.dispatch(Actions.getBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: 'Could not load the type index' }
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't find your Mark installation` }
           ])
         })
     })
   })
 
-  describe('createBookmarksResource', () => {
-    it('creates the bookmarks solid resource', () => {
-      nock('https://localhost:8443/')
-        .post('/path/to/bookmarks/')
+  describe('createBookmarksContainer', () => {
+    it('creates the bookmarks solid resource if it has not yet been created', () => {
+      noxy('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@id': webId,
+          'pim:storage': 'https://localhost:8443/'
+        })
+        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .reply(404)
+        .proxy('POST', '/Applications/mark/bookmarks')
         .reply(200)
 
-      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks/'))
+      return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_RESOURCE_SUCCESS }
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
+          ])
+        })
+    })
+
+    it('finds the bookmarks solid resource if it already exists', () => {
+      noxy('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@id': webId,
+          'pim:storage': 'https://localhost:8443/'
+        })
+        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .reply(200)
+
+      return store.dispatch(Actions.createBookmarksContainer())
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
+          ])
+        })
+    })
+
+    it('fires an app error if it cannot find the storage location', () => {
+      noxy('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@error': {
+            'type': 'HttpError',
+            'message': 'Internal Server Error'
+          }
+        })
+
+      return store.dispatch(Actions.createBookmarksContainer())
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
           ])
         })
     })
 
     it('fires an app error if the creation fails', () => {
-      nock('https://localhost:8443/')
-        .post('/path/to/bookmarks/')
+      noxy('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'pim': 'http://www.w3.org/ns/pim/space#'
+          },
+          '@id': webId,
+          'pim:storage': 'https://localhost:8443/'
+        })
+        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .reply(404)
+        .proxy('POST', '/Applications/mark/bookmarks')
         .reply(500)
 
-      return store.dispatch(Actions.createBookmarksResource('https://localhost:8443/path/to/bookmarks/'))
+      return store.dispatch(Actions.createBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_RESOURCE_REQUEST },
-            {
-              type: AT.BOOKMARKS_ALERT_SET,
-              kind: 'danger',
-              heading: 'Could not create bookmarks file'
-            }
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
           ])
         })
     })
   })
 
   describe('saveBookmark', () => {
-    const graph = rdflib.graph()
-    const namedGraph = 'https://localhost:8443/mark/bookmarks/bookmark.ttl'
-    const subject = rdflib.NamedNode.fromValue(`${namedGraph}#SomeBookmark`)
-    const bookmark = bookmarkModelFactory(graph, namedGraph, subject)
+    it('updates a bookmark', () => {
+      const id = 'https://localhost:8443/bookmark#b'
+      const dc = 'http://purl.org/dc/elements/1.1/'
+      const expectedPatchQuery =
+        `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
+        `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
 
-    it('saves a bookmark', () => {
-      nock('https://localhost:8443/')
-        .patch('/mark/bookmarks/bookmark.ttl')
+      noxy('https://localhost:8443/')
+        .proxy('PATCH', '/bookmark', expectedPatchQuery)
         .reply(200)
 
-      return store.dispatch(Actions.saveBookmark(bookmark))
+      const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
+      const newBookmark = oldBookmark.set('dc:title', 'new')
+
+      return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .then(() => {
-          const actions = store.getActions()
-          expect(actions.length).to.equal(2)
-          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST })
-          expect(actions[1].type).to.equal(AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS)
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
+            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
+          ])
+        })
+    })
+
+    it('saves a new bookmark', () => {
+      const id = 'https://localhost:8443/bookmark#b'
+      const dc = 'http://purl.org/dc/elements/1.1/'
+      const expectedPatchQuery =
+        `INSERT DATA { <${id}> <${dc}title> "title" . };\n`
+
+      noxy('https://localhost:8443/')
+        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+        .reply(200)
+
+      const bookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'title' })
+
+      return store.dispatch(Actions.saveBookmark(null, bookmark, true))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
+            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark }
+          ])
         })
     })
 
     it('fires an app error if the save fails', () => {
-      nock('https://localhost:8443/')
-        .patch('/mark/bookmarks/bookmark.ttl')
+      const id = 'https://localhost:8443/bookmark#b'
+      const dc = 'http://purl.org/dc/elements/1.1/'
+      const expectedPatchQuery =
+        `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
+        `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
+
+      noxy('https://localhost:8443/')
+        .proxy('PATCH', '/bookmark', expectedPatchQuery)
         .reply(500)
 
-      return store.dispatch(Actions.saveBookmark(bookmark))
+      const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
+      const newBookmark = oldBookmark.set('dc:title', 'new')
+
+      return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            {
-              type: AT.BOOKMARKS_ALERT_SET,
-              kind: 'danger',
-              heading: 'Could not save your bookmark'
-            }
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't save your bookmark` }
           ])
         })
     })
   })
 
   describe('loadBookmarks', () => {
-    it('fetches the bookmarks resource and creates a map of bookmark models', () => {
-      const bookmarksTurtle = `
-        @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-        @prefix bookmark: <http://www.w3.org/2002/01/bookmark#> .
-        @prefix dc: <http://purl.org/dc/elements/1.1/> .
-
-        <bookmark.ttl#ExampleBookmark>
-            dc:description "An example bookmark" ;
-            dc:title "Example Bookmark" ;
-            a bookmark:Bookmark ;
-            bookmark:hasTopic "foo", "bar" ;
-            bookmark:recalls <http://example.com/> .
-      `
+    it('fetches the bookmarks resource and compiles a map of bookmark data', () => {
+      const containerUrl = 'https://localhost:8443/Applications/mark/bookmarks/'
+      const bookmarkJson = {
+        '@id': 'https://localhost:8443/Applications/mark/bookmarks/0072a939-5b91-48d8-aeea-e0f085da95a0#bookmark',
+        'dc:title': 'Github repo for Mark',
+        'dc:description': 'A mark description!',
+        'book:recalls': { '@id': 'https://github.com/dan-f/mark' },
+        'solid:read': { '@value': 'false', '@type': 'http://www.w3.org/2001/XMLSchema#boolean' },
+        'book:hasTopic': [ 'github', 'mark' ]
+      }
+      const expectedBookmarks = Immutable.fromJS({
+        'https://localhost:8443/Applications/mark/bookmarks/0072a939-5b91-48d8-aeea-e0f085da95a0#bookmark': bookmarkJson
+      })
+      const twinqlResponse = `{
+        "@context": {
+          "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+          "book": "http://www.w3.org/2002/01/bookmark#",
+          "dc": "http://purl.org/dc/elements/1.1/",
+          "ldp": "http://www.w3.org/ns/ldp#",
+          "solid": "http://www.w3.org/ns/solid/terms#"
+        },
+        "@id": "https://localhost:8443/Applications/mark/bookmarks/",
+        "ldp:contains": [
+          {
+            "@id": "https://localhost:8443/Applications/mark/bookmarks/0072a939-5b91-48d8-aeea-e0f085da95a0",
+            "@graph": [
+              ${JSON.stringify(bookmarkJson)}
+            ]
+          }
+        ]
+      }`
 
       nock('https://localhost:8443/')
-        .get('/mark/bookmarks/*')
-        .reply(200, bookmarksTurtle, { 'Content-Type': 'text/turtle' })
+        .post('/,twinql')
+        .reply(200, twinqlResponse, { 'Content-Type': 'application/json+ld' })
 
-      const url = 'https://localhost:8443/mark/bookmarks/'
-
-      return store.dispatch(Actions.loadBookmarks(url))
+      return store.dispatch(Actions.loadBookmarks(containerUrl))
         .then(() => {
           const actions = store.getActions()
           expect(actions.length).to.equal(2)
-          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url })
-          expect(actions[1].type).to.equal(AT.BOOKMARKS_LOAD_SUCCESS)
-          expect([...actions[1].bookmarks.keys()]).to.eql([
-            'https://localhost:8443/mark/bookmarks/bookmark.ttl#ExampleBookmark'
-          ])
+          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl })
+          expect(actions[1].type).to.eql(AT.BOOKMARKS_LOAD_SUCCESS)
+          expect(actions[1].bookmarks).to.eql(expectedBookmarks)
         })
     })
 
     it('fires an app error if the loading fails', () => {
       nock('https://localhost:8443/')
-        .get('/mark/bookmarks/*')
-        .reply(500)
+        .post('/,twinql')
+        .reply(200, { '@error': { type: 'HttpError', message: 'Internal Server Error' } })
 
-      const url = 'https://localhost:8443/mark/bookmarks/ '
+      const containerUrl = 'https://localhost:8443/Applications/mark/bookmarks/'
 
-      return store.dispatch(Actions.loadBookmarks(url))
+      return store.dispatch(Actions.loadBookmarks(containerUrl))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_REQUEST, url },
+            { type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl },
             {
               type: AT.BOOKMARKS_ALERT_SET,
               kind: 'danger',
-              heading: 'Could not load your bookmarks'
+              heading: `Couldn't load your bookmarks`
             }
           ])
         })
@@ -280,7 +447,7 @@ describe('Actions', () => {
       const actions = store.getActions()
       expect(actions.length).to.equal(1)
       expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
-      expect(actions[0].bookmark.any('type')).to.equal('http://www.w3.org/2002/01/bookmark#Bookmark')
+      expect(actions[0].bookmark.getIn(['rdf:type', '@id'])).to.equal('book:Bookmark')
     })
   })
 
@@ -341,121 +508,65 @@ describe('Actions', () => {
     })
   })
 
-  describe('login', () => {
+  describe('findEndpoints', () => {
+    let assign
+
     beforeEach(() => {
-      global.localStorage = new MockLocalStorage()
+      assign = mock()
+      global.window = { location: { assign } }
+      global.document = {
+        origin: 'https://mark-app.biz',
+        location: { href: 'https://mark-app.biz/some/route' }
+      }
     })
 
     afterEach(() => {
-      delete global.localStorage
+      delete global.window
+      delete global.document
     })
 
-    it('discovers the current user and loads their profile', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
+    it(`finds the user's endpoints`, () => {
+      const login = 'https://localhost:8443/,account/login'
+      const logout = 'https://localhost:8443/,account/logout'
+      const twinql = 'https://localhost:8443/,query'
+      const proxy = 'https://localhost:8443/,proxy?uri='
       nock('https://localhost:8443/')
-        .head('/')
-        .reply(200, '', { user: webId })
-        .get('/profile/card')
-        .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
-
-      return store.dispatch(Actions.login({
-        authEndpoint: 'https://localhost:8443/',
-        cert: path.join(__dirname, '/data/cert.pem'),
-        key: path.join(__dirname, '/data/key.pem')
-      })).then(() => {
-        const [ authRequest, authSuccess, loadProfileRequest, loadProfileSuccess ] = store.getActions()
-        expect(authRequest).to.eql({ type: 'AUTH_REQUEST' })
-        expect(authSuccess).to.eql({
-          type: 'AUTH_SUCCESS',
-          webId: 'https://localhost:8443/profile/card#me'
+        .options('/')
+        .reply(200, '', {
+          link: [
+            `<${login}>; rel="https://solid.github.io/vocab/solid-terms.ttl#loginEndpoint"`,
+            `<${logout}>; rel="https://solid.github.io/vocab/solid-terms.ttl#logoutEndpoint"`,
+            `<${twinql}>; rel="https://solid.github.io/vocab/solid-terms.ttl#twinqlEndpoint"`,
+            `<${proxy}>; rel="https://solid.github.io/vocab/solid-terms.ttl#proxyEndpoint"`
+          ].join(',')
         })
-        expect(loadProfileRequest).to.eql({ type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST })
-        expect(loadProfileSuccess.type).to.equal(AT.BOOKMARKS_LOAD_PROFILE_SUCCESS)
-        expect(loadProfileSuccess.profile.parsedGraph.statements)
-          .to.eql(solidProfileFactory().parsedGraph.statements)
-      })
+
+      return store.dispatch(Actions.findEndpoints('https://localhost:8443/'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            {
+              type: AT.BOOKMARKS_SAVE_ENDPOINTS,
+              endpoints: { login, logout, twinql, proxy }
+            }
+          ])
+        })
     })
 
-    it('tries to discover the current user from localStorage', () => {
-      global.localStorage.setItem('mark', JSON.stringify({ webId: 'https://localhost:8443/profile/card#me' }))
+    it('fires an application error if it cannot find the endpoints', () => {
       nock('https://localhost:8443/')
-        .get('/profile/card')
-        .reply(200, profileTurtle, { 'Content-Type': 'text/turtle' })
-
-      return store.dispatch(Actions.login({
-        authEndpoint: 'https://localhost:8443/',
-        cert: path.join(__dirname, '/data/cert.pem'),
-        key: path.join(__dirname, '/data/key.pem')
-      })).then(() => {
-        const actions = store.getActions()
-        expect(actions.map(act => act.type)).to.eql([AT.BOOKMARKS_LOAD_PROFILE_REQUEST, AT.BOOKMARKS_LOAD_PROFILE_SUCCESS])
-        expect(localStorage.getItem).to.have.been.calledWith('mark')
-      })
-    })
-
-    it('alerts the user if an error occurs during authentication', () => {
-      nock('https://localhost:8443/')
-        .head('/')
-        .socketDelay(0)
-
-      nock('https://databox.me/')
-        .head('/')
-        .socketDelay(0)
-
-      return store.dispatch(Actions.login({
-        authEndpoint: 'https://localhost:8443/',
-        cert: path.join(__dirname, '/data/cert.pem'),
-        key: path.join(__dirname, '/data/key.pem')
-      })).catch(() => {
-        expect(store.getActions().map(act => act.type)).to.eql(['AUTH_REQUEST', 'AUTH_FAILURE', 'BOOKMARKS_ALERT_SET'])
-      })
-    })
-
-    it('resolves to null if it cannot log in', () => {
-      nock('https://localhost:8443/')
-        .head('/')
+        .options('/')
         .reply(500)
 
-      nock('https://databox.me/')
-        .head('/')
-        .reply(500)
-
-      return store.dispatch(Actions.login({
-        authEndpoint: 'https://localhost:8443/',
-        cert: path.join(__dirname, '/data/cert.pem'),
-        key: path.join(__dirname, '/data/key.pem')
-      })).then(webId => {
-        expect(webId).to.be.null
-      })
-    })
-
-    it('throws an error if loading the profile fails', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
-      nock('https://localhost:8443/')
-        .head('/')
-        .reply(200, '', { user: webId })
-        .get('/profile/card')
-        .reply(500)
-
-      return store.dispatch(Actions.login({
-        authEndpoint: 'https://localhost:8443/',
-        cert: path.join(__dirname, '/data/cert.pem'),
-        key: path.join(__dirname, '/data/key.pem')
-      })).catch(() => {
-        expect(store.getActions()).to.eql([
-          { type: 'AUTH_REQUEST' },
-          { type: 'AUTH_SUCCESS',
-            webId: 'https://localhost:8443/profile/card#me' },
-          { type: 'BOOKMARKS_LOAD_PROFILE_REQUEST' },
-          { type: 'BOOKMARKS_ALERT_SET',
-            kind: 'danger',
-            heading: 'Couldn\'t load your profile' }
-        ])
-      })
+      return store.dispatch(Actions.findEndpoints('https://localhost:8443/'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't find data needed to log in` }
+          ])
+        })
     })
   })
 
-  describe('saveWebId', () => {
+  describe('saveCredentials', () => {
     /*
       In the index.js, a listener is set up to save the latest webId in
       localstorage.  Hence firing an auth success action is all it takes to
@@ -463,9 +574,10 @@ describe('Actions', () => {
     */
     it('creates an auth success action with the given webId', () => {
       const webId = 'https://localhost:8443/profile/card#me'
-      store.dispatch(Actions.saveWebId(webId))
+      const key = 'qwertyuiop'
+      store.dispatch(Actions.saveCredentials({ webId, key }))
       expect(store.getActions()).to.eql(
-        [{ type: 'AUTH_SUCCESS', webId }]
+        [{ type: 'BOOKMARKS_SAVE_AUTH_CREDENTIALS', webId, key }]
       )
     })
   })

@@ -5,12 +5,12 @@ import { bindActionCreators } from 'redux'
 import * as Actions from '../actions'
 import BookmarkEditor from './BookmarkEditor'
 
-export function NewBookmarkEditor ({ newBookmark, actions }) {
-  if (newBookmark !== null) {
+export function NewBookmarkEditor ({ bookmark, actions }) {
+  if (bookmark !== null) {
     return (
       <BookmarkEditor
-        model={newBookmark}
-        handleCancel={() => actions.cancelEdit(newBookmark)}
+        bookmark={bookmark}
+        handleCancel={() => actions.cancelEdit(bookmark)}
         afterSubmit={() => {}}
       />
     )
@@ -20,9 +20,9 @@ export function NewBookmarkEditor ({ newBookmark, actions }) {
 }
 
 function mapStateToProps (state) {
-  const newBookmarkEntry = state.bookmarks.find(bookmark => bookmark.isNew)
+  const newBookmark = state.bookmarks.find(bookmark => bookmark.get('isNew'))
   return {
-    newBookmark: newBookmarkEntry ? newBookmarkEntry.model : null
+    bookmark: newBookmark || null
   }
 }
 
