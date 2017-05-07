@@ -2,30 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
 import { Provider } from 'react-redux'
-import { applyMiddleware, createStore } from 'redux'
-import thunkMiddleware from 'redux-thunk'
 
+import configureStore from './configureStore'
 import App from './containers/App'
-import { loadState, saveState } from './localStorage'
-import rootReducer from './reducers'
 
-const middlewares = [thunkMiddleware]
-if (process.env.NODE_ENV === 'development') {
-  const createLogger = require('redux-logger')
-  middlewares.push(createLogger())
-}
-
-const persistedState =loadState()
-const store = createStore(
-  rootReducer,
-  persistedState,
-  applyMiddleware(...middlewares)
-)
-
-store.subscribe(() => {
-  const { auth, endpoints } = store.getState()
-  saveState({ auth, endpoints })
-})
+const store = configureStore()
 
 function render (AppComponent) {
   ReactDOM.render(
