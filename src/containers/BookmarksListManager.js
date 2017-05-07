@@ -1,9 +1,9 @@
 import React from 'react'
+import Loadable from 'react-loading-overlay'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
-import Loading from '../components/Loading'
 import FilterableBookmarksList from './FilterableBookmarksList'
 import NewBookmarkEditor from './NewBookmarkEditor'
 
@@ -14,7 +14,6 @@ class BookmarksListManager extends React.Component {
   }
 
   componentDidMount () {
-    const { actions } = this.props
     const { bookmarksContainer } = this.props.match.params
     this.loadBookmarks(bookmarksContainer)
   }
@@ -23,7 +22,7 @@ class BookmarksListManager extends React.Component {
     const { bookmarksContainer: newBookmarksContainer } = this.props.match.params
     const { bookmarksContainer: oldBookmarksContainer } = prevProps.match.params
     if (newBookmarksContainer !== oldBookmarksContainer) {
-      this.loadBookmarks(bookmarksContainer)
+      this.loadBookmarks(newBookmarksContainer)
     }
   }
 
@@ -39,13 +38,10 @@ class BookmarksListManager extends React.Component {
   render () {
     const { loading } = this.state
     return (
-      <div>
+      <Loadable active={loading} spinner background='#FFFFFF' color='#000'>
         <NewBookmarkEditor />
-        {loading
-          ? <Loading />
-          : <FilterableBookmarksList />
-        }
-      </div>
+        <FilterableBookmarksList />
+      </Loadable>
     )
   }
 }

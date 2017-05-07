@@ -1,11 +1,11 @@
 import queryString from 'query-string'
 import React from 'react'
+import Loadable from 'react-loading-overlay'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 
-import Loading from '../components/Loading'
 import LoginPage from '../components/LoginPage'
 
 export class LoginContainer extends React.Component {
@@ -79,9 +79,11 @@ export class LoginContainer extends React.Component {
     const { loginUiOpen, loggingIn } = this.state
     const { handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit } = this
     const props = { loginUiOpen, handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit }
-    return loggingIn
-      ? <Loading />
-      : <LoginPage {...props} />
+    return (
+      <Loadable active={loggingIn} spinner background='#FFFFFF' color='#000'>
+        <LoginPage {...props} />
+      </Loadable>
+    )
   }
 }
 
