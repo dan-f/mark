@@ -70,15 +70,6 @@ export function bookmarks (state = Immutable.Map(), action) {
   }
 }
 
-export function bookmarksContainer (state = '', action) {
-  switch (action.type) {
-    case ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL:
-      return action.url
-    default:
-      return state
-  }
-}
-
 export function selectedTags (state = Immutable.Set(), action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_FILTER_ADD_TAG:
@@ -120,7 +111,6 @@ export default combineReducers({
   auth,
   endpoints,
   bookmarks,
-  bookmarksContainer,
   filters,
   alerts
 })

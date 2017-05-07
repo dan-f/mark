@@ -5,18 +5,17 @@ import { BrowserRouter as Router, Route } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
 import LoginContainer from '../containers/LoginContainer'
-import BookmarksLoader from '../containers/BookmarksLoader'
-import DropContainer from '../containers/DropContainer'
+import BookmarksListManager from '../containers/BookmarksListManager'
 
 const Root = ({ store }) =>
   <Provider store={store}>
     <Router>
-      <DropContainer>
+      <div>
         <Header />
         <Route exact path='/' component={LoginContainer} />
-        <Route path='/m/:bookmarksUrl(.+)/' component={BookmarksLoader} />
+        <Route path='/m/:bookmarksContainer(.+)/' component={BookmarksListManager} />
         <Footer />
-      </DropContainer>
+      </div>
     </Router>
   </Provider>
 

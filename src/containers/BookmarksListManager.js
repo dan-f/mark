@@ -6,12 +6,19 @@ import * as Actions from '../actions'
 import FilterableBookmarksList from './FilterableBookmarksList'
 import NewBookmarkEditor from './NewBookmarkEditor'
 
-class BookmarksLoader extends React.Component {
+class BookmarksListManager extends React.Component {
   componentDidMount () {
     const { actions } = this.props
-    const { bookmarksUrl } = this.props.match.params
-    actions.setBookmarksContainerUrl(bookmarksUrl)
-    actions.loadBookmarks(bookmarksUrl)
+    const { bookmarksContainer } = this.props.match.params
+    actions.loadBookmarks(bookmarksContainer)
+  }
+
+  componentDidUpdate (prevProps) {
+    const { bookmarksContainer: newBookmarksContainer } = this.props.match.params
+    const { bookmarksContainer: oldBookmarksContainer } = prevProps.match.params
+    if (newBookmarksContainer !== oldBookmarksContainer) {
+      actions.loadBookmarks(newBookmarksContainer)
+    }
   }
 
   render () {
@@ -30,4 +37,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(null, mapDispatchToProps)(BookmarksLoader)
+export default connect(null, mapDispatchToProps)(BookmarksListManager)

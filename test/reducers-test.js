@@ -205,19 +205,6 @@ describe('Reducers', () => {
     })
   })
 
-  describe('bookmarksContainer', () => {
-    it('sets the URL of the bookmarks resource', () => {
-      const url = 'https://localhost:8443/path/to/bookmarks/'
-      const action = { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url }
-      expect(Reducers.bookmarksContainer(undefined, action)).to.equal(url)
-    })
-
-    it('ignores unrecognized actions', () => {
-      testUnrecognizedAction(Reducers.bookmarksContainer, '')
-      testUnrecognizedAction(Reducers.bookmarksContainer, 'https://localhost:8443/mark/bookmarks/')
-    })
-  })
-
   describe('selectedTags', () => {
     it('adds tags to the selected set', () => {
       const action = { type: AT.BOOKMARKS_FILTER_ADD_TAG, tag: 'a tag' }

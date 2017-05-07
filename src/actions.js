@@ -87,7 +87,6 @@ export function maybeInstallAppResources () {
         bookmarksContainer || dispatch(createBookmarksContainer())
           .then(bookmarksContainer => dispatch(registerBookmarksContainer(bookmarksContainer)))
       )
-      .then(bookmarksContainer => dispatch(setBookmarksContainerUrl(bookmarksContainer)))
 }
 
 export function getBookmarksContainer () {
@@ -297,15 +296,6 @@ export function loadBookmarksSuccess (bookmarks) {
   return {
     type: ActionTypes.BOOKMARKS_LOAD_SUCCESS,
     bookmarks
-  }
-}
-
-// Setting the bookmarks URL for the application
-
-export function setBookmarksContainerUrl (url) {
-  return {
-    type: ActionTypes.BOOKMARKS_SET_BOOKMARKS_URL,
-    url
   }
 }
 

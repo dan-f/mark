@@ -32,12 +32,8 @@ export class LoginContainer extends React.Component {
       return
     }
     maybeInstallAppResources()
-      .then(() => {
-        const { bookmarksContainer } = this.props
-        const redirectTo = location.state && location.state.from
-          ? location.state.from.pathname
-          : `/m/${bookmarksContainer}`
-        history.push(redirectTo)
+      .then(bookmarksContainer => {
+        history.push(`/m/${bookmarksContainer}`)
       })
   }
 
@@ -81,8 +77,7 @@ export class LoginContainer extends React.Component {
 }
 
 const mapStateToProps = state => ({
-  auth: state.auth,
-  bookmarksContainer: state.bookmarksContainer
+  auth: state.auth
 })
 
 const mapDispatchToProps = dispatch => ({

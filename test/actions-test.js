@@ -91,8 +91,7 @@ describe('Actions', () => {
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
             { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' },
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks' },
-            { type: AT.BOOKMARKS_SET_BOOKMARKS_URL, url: 'https://localhost:8443/Applications/mark/bookmarks' }
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
           ])
         })
     })
