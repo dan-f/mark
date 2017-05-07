@@ -6,6 +6,7 @@ import { applyMiddleware, createStore } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 
 import App from './containers/App'
+import { loadState, saveState } from './localStorage'
 import rootReducer from './reducers'
 
 const middlewares = [thunkMiddleware]
@@ -13,15 +14,17 @@ if (process.env.NODE_ENV === 'development') {
   const createLogger = require('redux-logger')
   middlewares.push(createLogger())
 }
-const store = createStore(rootReducer, applyMiddleware(...middlewares))
 
-if (!localStorage.getItem('mark')) {
-  localStorage.setItem('mark', JSON.stringify({ auth: {}, endpoints: {} }))
-}
+const persistedState =loadState()
+const store = createStore(
+  rootReducer,
+  persistedState,
+  applyMiddleware(...middlewares)
+)
 
 store.subscribe(() => {
   const { auth, endpoints } = store.getState()
-  localStorage.setItem('mark', JSON.stringify({ auth, endpoints }))
+  saveState({ auth, endpoints })
 })
 
 function render (AppComponent) {

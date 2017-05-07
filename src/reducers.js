@@ -3,22 +3,7 @@ import { combineReducers } from 'redux'
 
 import * as ActionTypes from './actionTypes'
 
-if (process.env.NODE_ENV === 'test') {
-  const { MockLocalStorage } = require('../test/common')
-  global.localStorage = new MockLocalStorage()
-}
-
-const serializedState = localStorage.getItem('mark')
-const deserializedState = serializedState ? JSON.parse(serializedState) : null
-
-const initialAuthState = deserializedState
-  ? deserializedState.auth
-  : { webId: null, key: null }
-
-const initialEndpointsState = deserializedState
-  ? deserializedState.endpoints
-  : { login: null, logout: null, proxy: null, twinql: null }
-
+const initialAuthState = { webId: null, key: null }
 export function auth (state = initialAuthState, action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS:
@@ -30,6 +15,7 @@ export function auth (state = initialAuthState, action) {
   }
 }
 
+const initialEndpointsState = { login: null, logout: null, proxy: null, twinql: null }
 export function endpoints (state = initialEndpointsState, action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_SAVE_ENDPOINTS:
