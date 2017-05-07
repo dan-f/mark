@@ -2,7 +2,7 @@ import React from 'react'
 
 import SignupButton from '../containers/SignupButton'
 
-export default function LoginPage ({ loggingIn, handleClickLogin, loginServer, handleChangeLoginServer, handleCancel, handleSubmit }) {
+export default function LoginPage ({ loginUiOpen, handleClickLogin, loginServer, handleChangeLoginServer, handleCancel, handleSubmit }) {
   return (
     <div>
       <p>
@@ -11,7 +11,7 @@ export default function LoginPage ({ loggingIn, handleClickLogin, loginServer, h
       <p>
         It runs on <a href='https://solid.mit.edu/' target='_blank'>Solid</a>, an architecture where you own your data.
       </p>
-      {loggingIn
+      {loginUiOpen
         ? (
           <div>
             <form className='form-inline' onSubmit={handleSubmit}>

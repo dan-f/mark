@@ -3,38 +3,59 @@ import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
+import Loading from '../components/Loading'
 import FilterableBookmarksList from './FilterableBookmarksList'
 import NewBookmarkEditor from './NewBookmarkEditor'
 
 class BookmarksListManager extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = { loading: false }
+  }
+
   componentDidMount () {
     const { actions } = this.props
     const { bookmarksContainer } = this.props.match.params
-    actions.loadBookmarks(bookmarksContainer)
+    this.loadBookmarks(bookmarksContainer)
   }
 
   componentDidUpdate (prevProps) {
     const { bookmarksContainer: newBookmarksContainer } = this.props.match.params
     const { bookmarksContainer: oldBookmarksContainer } = prevProps.match.params
     if (newBookmarksContainer !== oldBookmarksContainer) {
-      actions.loadBookmarks(newBookmarksContainer)
+      this.loadBookmarks(bookmarksContainer)
     }
   }
 
+  loadBookmarks (bookmarksContainer) {
+    const { actions } = this.props
+    this.setState({ loading: true })
+    const loadedBookmarks = () => this.setState({ loading: false })
+    actions.loadBookmarks(bookmarksContainer)
+      .then(loadedBookmarks)
+      .catch(loadedBookmarks)
+  }
+
   render () {
+    const { loading } = this.state
     return (
       <div>
         <NewBookmarkEditor />
-        <FilterableBookmarksList />
+        {loading
+          ? <Loading />
+          : <FilterableBookmarksList />
+        }
       </div>
     )
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    actions: bindActionCreators(Actions, dispatch)
-  }
-}
+const mapStateToProps = state => ({
+  loading: state.loading
+})
 
-export default connect(null, mapDispatchToProps)(BookmarksListManager)
+const mapDispatchToProps = dispatch => ({
+  actions: bindActionCreators(Actions, dispatch)
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(BookmarksListManager)

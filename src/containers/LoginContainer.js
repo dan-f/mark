@@ -5,20 +5,24 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 
+import Loading from '../components/Loading'
 import LoginPage from '../components/LoginPage'
 
 export class LoginContainer extends React.Component {
   constructor (props) {
     super(props)
-    this.state = { loggingIn: false, loginServer: '' }
+    this.state = {
+      loggingIn: false,
+      loginUiOpen: false,
+      loginServer: ''
+    }
     this.handleClickLogin = this.handleClickLogin.bind(this)
     this.handleChangeLoginServer = this.handleChangeLoginServer.bind(this)
     this.handleCancel = this.handleCancel.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
-    this.maybeRedirectToApp()
   }
 
-  maybeRedirectToApp () {
+  componentDidMount () {
     const { auth, history, location } = this.props
     const { maybeInstallAppResources, saveCredentials } = this.props.actions
     let { webid: webId, key } = queryString.parse(location.search)
@@ -31,14 +35,17 @@ export class LoginContainer extends React.Component {
     } else {
       return
     }
+    this.setState({ loggingIn: true })
     maybeInstallAppResources()
       .then(bookmarksContainer => {
+        this.setState({ loggingIn: false })
         history.push(`/m/${bookmarksContainer}`)
       })
+      .catch(() => this.setState({ loggingIn: false }))
   }
 
   handleClickLogin () {
-    this.setState({ loggingIn: true })
+    this.setState({ loginUiOpen: true })
   }
 
   handleChangeLoginServer (event) {
@@ -46,7 +53,7 @@ export class LoginContainer extends React.Component {
   }
 
   handleCancel () {
-    this.setState({ loggingIn: false, loginServer: '' })
+    this.setState({ loginUiOpen: false, loginServer: '' })
   }
 
   handleSubmit (event) {
@@ -69,10 +76,12 @@ export class LoginContainer extends React.Component {
   }
 
   render () {
-    const { loggingIn } = this.state
+    const { loginUiOpen, loggingIn } = this.state
     const { handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit } = this
-    const props = { loggingIn, handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit }
-    return <LoginPage {...props} />
+    const props = { loginUiOpen, handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit }
+    return loggingIn
+      ? <Loading />
+      : <LoginPage {...props} />
   }
 }
 
