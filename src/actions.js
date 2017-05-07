@@ -58,7 +58,8 @@ export function findEndpoints (url) {
         }))
       })
       .catch(error => {
-        dispatch(setError(`Couldn't find data needed to log in`))
+        const { message } = error
+        dispatch(setError({ heading: `Couldn't find data needed to log in`, message }))
         throw error
       })
   }
@@ -111,7 +112,8 @@ export function getBookmarksContainer () {
         ? matchingRegistrations[0]['solid:instanceContainer']['@id']
         : null
     }).catch(error => {
-      dispatch(setError(`Couldn't find your Mark installation`))
+      const { message } = error
+      dispatch(setError({ heading: `Couldn't find your Mark installation`, message }))
       throw error
     })
   }
@@ -149,7 +151,8 @@ export function createBookmarksContainer () {
       return bookmarksContainer
     })
     .catch(error => {
-      dispatch(setError(`Couldn't install your bookmarks container`))
+      const { message } = error
+      dispatch(setError({ heading: `Couldn't install your bookmarks container`, message }))
       throw error
     })
   }
@@ -191,7 +194,8 @@ export function registerBookmarksContainer (bookmarksContainer) {
       return bookmarksContainer
     })
     .catch(error => {
-      dispatch(setError(`Couldn't update your bookmarks type registration`))
+      const { message } = error
+      dispatch(setError({ heading: `Couldn't update your bookmarks type registration`, message }))
       throw error
     })
   }
@@ -223,7 +227,8 @@ export function saveBookmark (original, updated, isNew) {
     return utils.sparqlPatch(utils.proxyUrl(proxy, url, key), isNew ? [] : toDel, toIns)
       .then(() => dispatch(saveBookmarkSuccess(updated)))
       .catch(error => {
-        dispatch(setError(`Couldn't save your bookmark`))
+        const { message } = error
+        dispatch(setError({ heading: `Couldn't save your bookmark`, message }))
         throw error
       })
   }
@@ -274,7 +279,8 @@ export function loadBookmarks (containerUrl) {
       dispatch(loadBookmarksSuccess(bookmarks))
       return bookmarks
     }).catch(error => {
-      dispatch(setError(`Couldn't load your bookmarks`))
+      const { message } = error
+      dispatch(setError({ heading: `Couldn't load your bookmarks`, message }))
       throw error
     })
   }

@@ -129,7 +129,12 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't install your bookmarks container`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
@@ -203,7 +208,12 @@ describe('Actions', () => {
       return store.dispatch(Actions.getBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't find your Mark installation` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't find your Mark installation`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
@@ -273,7 +283,12 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't install your bookmarks container`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
@@ -297,7 +312,12 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't install your bookmarks container` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't install your bookmarks container`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
@@ -366,7 +386,12 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't save your bookmark` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't save your bookmark`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
@@ -433,7 +458,8 @@ describe('Actions', () => {
             {
               type: AT.BOOKMARKS_ALERT_SET,
               kind: 'danger',
-              heading: `Couldn't load your bookmarks`
+              heading: `Couldn't load your bookmarks`,
+              message: 'Internal Server Error'
             }
           ])
         })
@@ -560,7 +586,12 @@ describe('Actions', () => {
       return store.dispatch(Actions.findEndpoints('https://localhost:8443/'))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_ALERT_SET, kind: 'danger', heading: `Couldn't find data needed to log in` }
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't find data needed to log in`,
+              message: 'Internal Server Error'
+            }
           ])
         })
     })
