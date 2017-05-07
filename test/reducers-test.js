@@ -73,7 +73,7 @@ describe('Reducers', () => {
         login: null,
         logout: null,
         proxy: null,
-        twinql: null
+        twinql: 'https://databox.me/,query'
       })
     })
 

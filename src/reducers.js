@@ -15,7 +15,12 @@ export function auth (state = initialAuthState, action) {
   }
 }
 
-const initialEndpointsState = { login: null, logout: null, proxy: null, twinql: null }
+const initialEndpointsState = {
+  login: null,
+  logout: null,
+  proxy: null,
+  twinql: 'https://databox.me/,query'
+}
 export function endpoints (state = initialEndpointsState, action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_SAVE_ENDPOINTS:
