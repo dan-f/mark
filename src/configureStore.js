@@ -20,8 +20,8 @@ const configureStore = () => {
   )
 
   store.subscribe(() => {
-    const { auth, endpoints } = store.getState()
-    saveState({ auth, endpoints })
+    const { auth, profile, endpoints } = store.getState()
+    saveState({ auth, profile, endpoints })
   })
 
   return store

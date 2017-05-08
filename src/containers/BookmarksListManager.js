@@ -5,7 +5,6 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 import FilterableBookmarksList from './FilterableBookmarksList'
-import NewBookmarkEditor from './NewBookmarkEditor'
 
 class BookmarksListManager extends React.Component {
   constructor (props) {
@@ -39,7 +38,6 @@ class BookmarksListManager extends React.Component {
     const { loading } = this.state
     return (
       <Loadable active={loading} spinner background='#FFFFFF' color='#000'>
-        <NewBookmarkEditor />
         <FilterableBookmarksList />
       </Loadable>
     )

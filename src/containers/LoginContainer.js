@@ -24,7 +24,7 @@ export class LoginContainer extends React.Component {
 
   componentDidMount () {
     const { auth, history, location } = this.props
-    const { maybeInstallAppResources, saveCredentials } = this.props.actions
+    const { loadProfile, maybeInstallAppResources, saveCredentials } = this.props.actions
     let { webid: webId, key } = queryString.parse(location.search)
     if (!(webId && key)) {
       webId = auth.webId
@@ -36,7 +36,8 @@ export class LoginContainer extends React.Component {
       return
     }
     this.setState({ loggingIn: true })
-    maybeInstallAppResources()
+    loadProfile()
+      .then(maybeInstallAppResources)
       .then(bookmarksContainer => {
         this.setState({ loggingIn: false })
         history.push(`/m/${bookmarksContainer}`)

@@ -49,6 +49,27 @@ describe('Reducers', () => {
     })
   })
 
+  describe('profile', () => {
+    it('saves the profile after loading', () => {
+      const profile = { 'foaf:img': 'https://example.com/img.jpg' }
+      expect(
+        Reducers.profile(undefined, { type: AT.BOOKMARKS_LOAD_PROFILE_SUCCESS, profile })
+      ).to.eql({ 'foaf:img': 'https://example.com/img.jpg' })
+    })
+
+    it('clears the profile', () => {
+      const profile = { 'foaf:img': 'https://example.com/img.jpg' }
+      expect(
+        Reducers.profile(profile, { type: AT.BOOKMARKS_CLEAR_PROFILE })
+      ).to.eql({ 'foaf:img': '/solid-logo.svg' })
+    })
+
+    it('ignores unrecognized actions', () => {
+      const profile = { 'foaf:img': 'https://example.com/img.jpg' }
+      testUnrecognizedAction(Reducers.profile, profile)
+    })
+  })
+
   describe('endpoints', () => {
     const endpoints = {
       login: 'https://localhost:8443/,login',

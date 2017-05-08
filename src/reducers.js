@@ -15,6 +15,18 @@ export function auth (state = initialAuthState, action) {
   }
 }
 
+const initialProfileState = { 'foaf:img': '/solid-logo.svg' }
+export const profile = (state = initialProfileState, action) => {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS:
+      return action.profile
+    case ActionTypes.BOOKMARKS_CLEAR_PROFILE:
+      return initialProfileState
+    default:
+      return state
+  }
+}
+
 const initialEndpointsState = {
   login: null,
   logout: null,
@@ -109,6 +121,7 @@ export function alerts (state = Immutable.Map(), action) {
 
 export default combineReducers({
   auth,
+  profile,
   endpoints,
   bookmarks,
   filters,

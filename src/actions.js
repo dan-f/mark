@@ -11,6 +11,7 @@ const PREFIX_CONTEXT = {
   rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
   book: 'http://www.w3.org/2002/01/bookmark#',
   dc: 'http://purl.org/dc/elements/1.1/',
+  foaf: 'http://xmlns.com/foaf/0.1/',
   ldp: 'http://www.w3.org/ns/ldp#',
   pim: 'http://www.w3.org/ns/pim/space#',
   solid: 'http://www.w3.org/ns/solid/terms#'
@@ -18,13 +19,58 @@ const PREFIX_CONTEXT = {
 
 // Authentication
 
-export function saveCredentials ({ webId, key }) {
-  return {
-    type: ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
-    webId,
-    key
-  }
+export const saveCredentials = ({ webId, key }) => ({
+  type: ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
+  webId,
+  key
+})
+
+export const clearCredentials = () => ({
+  type: ActionTypes.BOOKMARKS_CLEAR_AUTH_CREDENTIALS
+})
+
+export const logout = () => dispatch => {
+  dispatch(clearCredentials())
+  dispatch(clearProfile())
 }
+
+// Profile
+
+export const loadProfile = () => (dispatch, getState) => {
+  const { auth: { webId } } = getState()
+  dispatch(loadProfileRequest())
+  return dispatch(twinql(`
+    @prefix foaf http://xmlns.com/foaf/0.1/
+    ${webId} {
+      foaf:img
+    }
+  `)).then(response => {
+    if (response['@error']) {
+      throw new Error(response['@error'].message)
+    }
+    return response
+  }).then(response =>
+    dispatch(loadProfileSuccess({
+      'foaf:img': response['foaf:img'] ? response['foaf:img']['@id'] : '/solid-logo.svg'
+    }))
+  ).catch(error => {
+    dispatch(setError({ heading: `Couldn't load your profile`, message: error.message }))
+    throw error
+  })
+}
+
+export const clearProfile = () => ({
+  type: ActionTypes.BOOKMARKS_CLEAR_PROFILE
+})
+
+export const loadProfileRequest = () => ({
+  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST
+})
+
+export const loadProfileSuccess = profile => ({
+  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+  profile
+})
 
 // Twinql
 
@@ -136,13 +182,13 @@ export function createBookmarksContainer () {
       }
       return storage
     }).then(storage => {
-      const bookmarksContainer = utils.defaultBookmarksUrl(storage)
-      const proxiedContainerUrl = utils.proxyUrl(proxy, bookmarksContainer, key)
+      const bookmarksContainer = utils.defaultBookmarksUrl(storage['@id'])
+      const proxiedContainerUrl = utils.proxyUrl(proxy, urljoin(bookmarksContainer, '.config'), key)
       return fetch(proxiedContainerUrl, { method: 'HEAD' })
         .then(response =>
           response.status >= 200 && response.status < 300
             ? response
-            : fetch(proxiedContainerUrl, { method: 'POST' }).then(utils.checkStatus)
+            : fetch(proxiedContainerUrl, { method: 'PUT' }).then(utils.checkStatus)
         )
         .then(() => bookmarksContainer)
     }).then(bookmarksContainer => {
@@ -177,7 +223,7 @@ export function registerBookmarksContainer (bookmarksContainer) {
       @prefix solid http://www.w3.org/ns/solid/terms#
       ${webId} { solid:publicTypeIndex }
     `)).then(response => {
-      const publicTypeIndex = response['solid:publicTypeIndex']
+      const publicTypeIndex = response['solid:publicTypeIndex']['@id']
       const book = 'http://www.w3.org/2002/01/bookmark#'
       const solid = 'http://www.w3.org/ns/solid/terms#'
       const registrationId = uuid.v4()
@@ -273,6 +319,7 @@ export function loadBookmarks (containerUrl) {
       return response
     }).then(response => {
       const bookmarks = response['ldp:contains']
+        .filter(bookmarkResource => bookmarkResource['@graph'].length)
         .map(bookmarkResource => bookmarkResource['@graph'][0])
         .reduce((bookmarks, bookmark) => bookmarks.set(bookmark['@id'], Immutable.fromJS(bookmark)), Immutable.Map())
       dispatch(loadBookmarksSuccess(bookmarks))
@@ -340,17 +387,16 @@ export function cancelEdit (bookmark) {
   }
 }
 
-export function createNew () {
+export function createNew (bookmarksContainer) {
   return (dispatch, getState) => {
-    const { bookmarksContainer } = getState()
     const bookmarkUrl = urljoin(bookmarksContainer, uuid.v4())
     return dispatch(newBookmark(bookmarkUrl))
   }
 }
 
-export function createAndEditNew () {
+export function createAndEditNew (bookmarksContainer) {
   return dispatch => {
-    const { bookmark } = dispatch(createNew())
+    const { bookmark } = dispatch(createNew(bookmarksContainer))
     return dispatch(edit(bookmark))
   }
 }

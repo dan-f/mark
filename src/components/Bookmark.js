@@ -3,7 +3,7 @@ import React from 'react'
 import Tag from './Tag'
 
 const Bookmark = ({ title, url, tags, comments, onClickEdit, handleSelectTag }) =>
-  <div className='w-100'>
+  <div className>
     <div className='bookmark-title-row row'>
       <div className='col'>
         <div className='row'>

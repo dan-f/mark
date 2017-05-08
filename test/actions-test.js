@@ -38,6 +38,56 @@ describe('Actions', () => {
     nock.cleanAll()
   })
 
+  describe('loadProfile', () => {
+    it('loads the profile', () => {
+      nock('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'foaf': 'http://xmlns.com/foaf/0.1/'
+          },
+          '@id': webId,
+          'foaf:img': { '@id': 'https://localhost:8443/me.jpg' }
+        })
+
+      return store.dispatch(Actions.loadProfile())
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            {
+              type: AT.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+              profile: { 'foaf:img': 'https://localhost:8443/me.jpg' }
+            }
+          ])
+        })
+    })
+
+    it('fires an app error when the profile fails to load', () => {
+      nock('https://localhost:8443/')
+        .post('/,twinql')
+        .reply(200, {
+          '@context': {
+            'foaf': 'http://xmlns.com/foaf/0.1/'
+          },
+          '@id': webId,
+          '@error': { message: 'Internal Server Error' }
+        })
+
+      return store.dispatch(Actions.loadProfile())
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            {
+              type: AT.BOOKMARKS_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't load your profile`,
+              message: 'Internal Server Error'
+            }
+          ])
+        })
+    })
+  })
+
   describe('maybeInstallAppResources', () => {
     it('registers bookmarks in the type index and sets the bookmarks url', () => {
       noxy('https://localhost:8443/')
@@ -64,13 +114,13 @@ describe('Actions', () => {
             'pim': 'http://www.w3.org/ns/pim/space#'
           },
           '@id': webId,
-          'pim:storage': 'https://localhost:8443/'
+          'pim:storage': { '@id': 'https://localhost:8443/' }
         })
         // HEAD to test whether the bookmarks container already exists
-        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
         .reply(404)
         // POST to create the bookmarks container
-        .proxy('POST', '/Applications/mark/bookmarks')
+        .proxy('PUT', '/Applications/mark/bookmarks/.config')
         .reply(200)
         // query to find the public type index
         .post('/,twinql')
@@ -79,7 +129,7 @@ describe('Actions', () => {
             'solid': 'http://www.w3.org/ns/solid/terms#'
           },
           '@id': 'https://dan-f.databox.me/profile/card#me',
-          'solid:publicTypeIndex': 'https://localhost:8443/Preferences/publicTypeIndex.ttl'
+          'solid:publicTypeIndex': { '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl' }
         })
         // PATCH to update the public type index with the bookmarks type registration
         .proxy('PATCH', '/Preferences/publicTypeIndex.ttl')
@@ -89,9 +139,9 @@ describe('Actions', () => {
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' },
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
             { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
+            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -117,11 +167,11 @@ describe('Actions', () => {
             'pim': 'http://www.w3.org/ns/pim/space#'
           },
           '@id': webId,
-          'pim:storage': 'https://localhost:8443/'
+          'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
         .reply(404)
-        .proxy('POST', '/Applications/mark/bookmarks')
+        .proxy('PUT', '/Applications/mark/bookmarks/.config')
         .reply(500)
 
       return store.dispatch(Actions.maybeInstallAppResources())
@@ -227,18 +277,18 @@ describe('Actions', () => {
             'pim': 'http://www.w3.org/ns/pim/space#'
           },
           '@id': webId,
-          'pim:storage': 'https://localhost:8443/'
+          'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
         .reply(404)
-        .proxy('POST', '/Applications/mark/bookmarks')
+        .proxy('PUT', '/Applications/mark/bookmarks/.config')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -251,16 +301,16 @@ describe('Actions', () => {
             'pim': 'http://www.w3.org/ns/pim/space#'
           },
           '@id': webId,
-          'pim:storage': 'https://localhost:8443/'
+          'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks' }
+            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -300,11 +350,11 @@ describe('Actions', () => {
             'pim': 'http://www.w3.org/ns/pim/space#'
           },
           '@id': webId,
-          'pim:storage': 'https://localhost:8443/'
+          'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks')
+        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
         .reply(404)
-        .proxy('POST', '/Applications/mark/bookmarks')
+        .proxy('PUT', '/Applications/mark/bookmarks/.config')
         .reply(500)
 
       return store.dispatch(Actions.createBookmarksContainer())

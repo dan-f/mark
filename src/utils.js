@@ -176,5 +176,5 @@ export function markDataContainer (storageUrl) {
  * expected to reside.
  */
 export function defaultBookmarksUrl (storageUrl) {
-  return urljoin(markDataContainer(storageUrl), 'bookmarks')
+  return urljoin(markDataContainer(storageUrl), 'bookmarks', '/')
 }
