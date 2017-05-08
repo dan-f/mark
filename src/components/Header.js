@@ -8,17 +8,17 @@ export default function Header () {
   return (
     <div>
       <div className='row'>
-        <div className='col-xs-8'>
+        <div className='col-8'>
           <h1>Mark</h1>
         </div>
-        <div className='col-xs-4'>
-          <span className='pull-xs-right' style={{marginTop: '10px'}}>
+        <div className='col-4'>
+          <span className='pull-right' style={{marginTop: '10px'}}>
             <NewBookmarkButton />
           </span>
         </div>
       </div>
       <div className='row'>
-        <div className='col-xs-12'>
+        <div className='col-12'>
           <Error />
           <Info />
         </div>
