@@ -10,11 +10,13 @@ import BookmarksListManager from '../containers/BookmarksListManager'
 const Root = ({ store }) =>
   <Provider store={store}>
     <Router>
-      <div>
-        <Header />
-        <Route exact path='/' component={LoginContainer} />
-        <Route path='/m/:bookmarksContainer(.+)/' component={BookmarksListManager} />
-        <Footer />
+      <div className='row'>
+        <div className='col-md-9'>
+          <Header />
+          <Route exact path='/' component={LoginContainer} />
+          <Route path='/m/:bookmarksContainer(.+)/' component={BookmarksListManager} />
+          <Footer />
+        </div>
       </div>
     </Router>
   </Provider>
