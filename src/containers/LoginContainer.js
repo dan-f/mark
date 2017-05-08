@@ -71,7 +71,7 @@ export class LoginContainer extends React.Component {
     findEndpoints(loginServer)
       .then(action =>
         window.location.assign(
-          `${action.endpoints.login}?redirect=${document.location.href}&origin=${document.origin}`
+          `${action.endpoints.login}?redirect=${window.location.href}&origin=${window.location.origin}`
         )
       )
   }
