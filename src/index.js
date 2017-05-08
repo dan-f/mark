@@ -1,50 +1,24 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { AppContainer } from 'react-hot-loader'
-import { Provider } from 'react-redux'
-import { applyMiddleware, createStore } from 'redux'
-import thunkMiddleware from 'redux-thunk'
 
-import { login } from './actions'
-import App from './containers/App'
-import rootReducer from './reducers'
+import configureStore from './configureStore'
+import Root from './components/Root'
 
-const middlewares = [thunkMiddleware]
-if (process.env.NODE_ENV === 'development') {
-  const createLogger = require('redux-logger')
-  middlewares.push(createLogger())
-}
-const store = createStore(rootReducer, applyMiddleware(...middlewares))
+const store = configureStore()
 
-if (!localStorage.getItem('mark')) {
-  localStorage.setItem('mark', JSON.stringify({ webId: null }))
-}
-
-store.subscribe(() => {
-  const webId = store.getState().auth.webId
-  localStorage.setItem('mark', JSON.stringify({ webId }))
-})
-
-const { webId } = JSON.parse(localStorage.getItem('mark'))
-if (webId) {
-  store.dispatch(login())
-}
-
-function render (AppComponent) {
+const render = RootComponent =>
   ReactDOM.render(
-    <Provider store={store}>
-      <AppContainer>
-        <AppComponent />
-      </AppContainer>
-    </Provider>,
+    <AppContainer>
+      <RootComponent store={store} />
+    </AppContainer>,
     document.getElementById('app-container')
   )
-}
-
-render(App)
 
 if (module.hot) {
-  module.hot.accept('./containers/App', () => {
-    render(require('./containers/App').default)
+  module.hot.accept('./components/Root', () => {
+    render(require('./components/Root').default)
   })
 }
+
+render(Root)

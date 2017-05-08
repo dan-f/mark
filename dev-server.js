@@ -14,14 +14,6 @@ const app = new WebpackDevServer(webpack(config), {
   }
 })
 
-// This is for solid's hacky tls auth
-app.use((req, res, next) => {
-  if (req.method === 'HEAD') {
-    res.sendStatus(200)
-  }
-  next()
-})
-
 app.listen(3000, 'localhost', function (err, result) {
   if (err) {
     return console.log(err)

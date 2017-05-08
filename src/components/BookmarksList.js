@@ -1,33 +1,40 @@
 import React from 'react'
 
-import BookmarkListItem from './BookmarkListItem'
+import NewBookmark from './NewBookmark'
+import Bookmark from './Bookmark'
+import ListGroup from './ListGroup'
+import ListGroupItem from './ListGroupItem'
 import BookmarkEditor from '../containers/BookmarkEditor'
 
 export default function BookmarksList ({ bookmarks, handleCancelEditing, handleClickEdit, handleSelectTag }) {
   return (
     <div className='row'>
-      <div className='col-xs-12'>
-        <ul className='list-group'>
+      <div className='col'>
+        <ListGroup>
+          <ListGroupItem>
+            <NewBookmark />
+          </ListGroupItem>
           {bookmarks.map(bookmark =>
-              bookmark.isEditing
-                ? <li className='list-group-item' key={bookmark.model.any('url')}>
-                  <BookmarkEditor
-                    key={bookmark.model.any('url')}
-                    model={bookmark.model}
-                    handleCancel={handleCancelEditing(bookmark.model)}
-                  />
-                </li>
-                : <BookmarkListItem
-                  key={bookmark.model.any('url')}
-                  title={bookmark.model.any('title')}
-                  url={bookmark.model.any('url')}
-                  tags={bookmark.model.get('tags')}
-                  comments={bookmark.model.any('description')}
-                  onClickEdit={handleClickEdit(bookmark.model)}
+            bookmark.get('isEditing')
+              ? <ListGroupItem key={bookmark.getIn(['data', 'book:recalls', '@id'])}>
+                <BookmarkEditor
+                  key={bookmark.getIn(['data', 'book:recalls', '@id'])}
+                  bookmark={bookmark}
+                  handleCancel={handleCancelEditing(bookmark)}
+                />
+              </ListGroupItem>
+              : <ListGroupItem key={bookmark.getIn(['data', 'book:recalls', '@id'])}>
+                <Bookmark
+                  title={bookmark.getIn(['data', 'dc:title'])}
+                  url={bookmark.getIn(['data', 'book:recalls', '@id'])}
+                  tags={bookmark.getIn(['data', 'book:hasTopic'])}
+                  comments={bookmark.getIn(['data', 'dc:description'])}
+                  onClickEdit={handleClickEdit(bookmark)}
                   handleSelectTag={handleSelectTag}
                 />
+              </ListGroupItem>
             )}
-        </ul>
+        </ListGroup>
       </div>
     </div>
   )

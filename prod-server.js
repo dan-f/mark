@@ -16,7 +16,7 @@ const app = connect()
 app.use((req, res, next) => {
   const parsedUrl = url.parse(req.url)
   const route = parsedUrl.pathname
-  const isPathToStaticFile = !!['.html', 'css', '.js', '.map', '.ico'].find(ext => route.endsWith(ext))
+  const isPathToStaticFile = !!['.html', 'css', '.js', '.map', '.ico', '.svg', '.jpg', '.png', '.gif'].find(ext => route.endsWith(ext))
   if (!isPathToStaticFile) {
     parsedUrl.pathname = '/'
     req.url = url.format(parsedUrl)
@@ -32,7 +32,6 @@ app.use(serveStatic(staticRoot, {
 app.use(compression())
 
 app.use(timeout('5s'))
-
 
 /*
  * (Environment variable) options:
@@ -66,7 +65,7 @@ if (INSECURE) {
   }
   const options = {
     key: fs.readFileSync(TLS_KEY),
-    cert: fs.readFileSync(TLS_CERT),
+    cert: fs.readFileSync(TLS_CERT)
   }
   https.createServer(options, app).listen(PORT || 443, HOSTNAME)
 }
