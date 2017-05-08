@@ -14,7 +14,7 @@ const PREFIX_CONTEXT = {
   foaf: 'http://xmlns.com/foaf/0.1/',
   ldp: 'http://www.w3.org/ns/ldp#',
   pim: 'http://www.w3.org/ns/pim/space#',
-  solid: 'http://www.w3.org/ns/solid/terms#'
+  solid: 'https://solid.github.io/vocab/solid-terms.ttl#'
 }
 
 // Authentication
@@ -140,7 +140,7 @@ export function getBookmarksContainer () {
     const { auth: { webId } } = getState()
     return dispatch(twinql(`
       @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix solid http://www.w3.org/ns/solid/terms#
+      @prefix solid https://solid.github.io/vocab/solid-terms.ttl#
       @prefix book  http://www.w3.org/2002/01/bookmark#
       ${webId} {
         solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
@@ -220,7 +220,7 @@ export function registerBookmarksContainer (bookmarksContainer) {
   return (dispatch, getState) => {
     const { auth: { webId, key }, endpoints: { proxy } } = getState()
     return dispatch(twinql(`
-      @prefix solid http://www.w3.org/ns/solid/terms#
+      @prefix solid https://solid.github.io/vocab/solid-terms.ttl#
       ${webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
@@ -302,7 +302,7 @@ export function loadBookmarks (containerUrl) {
       @prefix book  http://www.w3.org/2002/01/bookmark#
       @prefix dc    http://purl.org/dc/elements/1.1/
       @prefix ldp   http://www.w3.org/ns/ldp#
-      @prefix solid http://www.w3.org/ns/solid/terms#
+      @prefix solid https://solid.github.io/vocab/solid-terms.ttl#
       ${containerUrl} {
         [ ldp:contains ] => ( rdf:type book:Bookmark ) {
           dc:title

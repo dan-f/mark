@@ -96,7 +96,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -126,7 +126,7 @@ describe('Actions', () => {
         .post('/,twinql')
         .reply(200, {
           '@context': {
-            'solid': 'http://www.w3.org/ns/solid/terms#'
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#'
           },
           '@id': 'https://dan-f.databox.me/profile/card#me',
           'solid:publicTypeIndex': { '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl' }
@@ -152,7 +152,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -196,7 +196,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -222,7 +222,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -245,7 +245,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://www.w3.org/ns/solid/terms#',
+            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@error': {
