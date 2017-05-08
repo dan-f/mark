@@ -16,7 +16,7 @@ const app = connect()
 app.use((req, res, next) => {
   const parsedUrl = url.parse(req.url)
   const route = parsedUrl.pathname
-  const isPathToStaticFile = !!['.html', 'css', '.js', '.map', '.ico'].find(ext => route.endsWith(ext))
+  const isPathToStaticFile = !!['.html', 'css', '.js', '.map', '.ico', '.svg', '.jpg', '.png', '.gif'].find(ext => route.endsWith(ext))
   if (!isPathToStaticFile) {
     parsedUrl.pathname = '/'
     req.url = url.format(parsedUrl)
