@@ -106,11 +106,14 @@ describe('Reducers', () => {
   describe('bookmarks', () => {
     const makeBookmark = () => Immutable.fromJS({
       '@id': 'https://localhost:8443/bookmarks.ttl#test-bookmark',
-      'dc:title': '',
-      'dc:description': '',
-      'book:recalls': '',
+      'dc:title': { '@value': '' },
+      'dc:description': { '@value': '' },
+      'book:recalls': { '@value': '' },
       'book:hasTopic': [],
-      'solid:read': false
+      'solid:read': {
+        '@value': 'false',
+        '@type': 'http://www.w3.org/2001/XMLSchema#boolean'
+      }
     })
 
     it('sets the bookmarks after a successful load', () => {
@@ -139,7 +142,7 @@ describe('Reducers', () => {
 
     it('replaces a bookmark after a successful save', () => {
       const oldBookmark = makeBookmark()
-      const newBookmark = oldBookmark.set('dc:title', 'new title')
+      const newBookmark = oldBookmark.set('dc:title', { '@value': 'new title' })
       const action = { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
       const state = Immutable.fromJS({
         [oldBookmark.get('@id')]: {

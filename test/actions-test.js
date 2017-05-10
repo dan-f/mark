@@ -96,7 +96,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -126,7 +126,7 @@ describe('Actions', () => {
         .post('/,twinql')
         .reply(200, {
           '@context': {
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#'
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#'
           },
           '@id': 'https://dan-f.databox.me/profile/card#me',
           'solid:publicTypeIndex': { '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl' }
@@ -152,7 +152,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -196,7 +196,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -222,7 +222,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -245,7 +245,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'https://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@error': {
@@ -452,10 +452,10 @@ describe('Actions', () => {
       const bookmarkJson = {
         '@id': 'https://localhost:8443/Applications/mark/bookmarks/0072a939-5b91-48d8-aeea-e0f085da95a0#bookmark',
         'dc:title': 'Github repo for Mark',
-        'dc:description': 'A mark description!',
+        'dc:description': { '@value': 'A mark description!' },
         'book:recalls': { '@id': 'https://github.com/dan-f/mark' },
         'solid:read': { '@value': 'false', '@type': 'http://www.w3.org/2001/XMLSchema#boolean' },
-        'book:hasTopic': [ 'github', 'mark' ]
+        'book:hasTopic': [ { '@value': 'github' }, { '@value': 'mark' } ]
       }
       const expectedBookmarks = Immutable.fromJS({
         'https://localhost:8443/Applications/mark/bookmarks/0072a939-5b91-48d8-aeea-e0f085da95a0#bookmark': bookmarkJson
@@ -609,10 +609,10 @@ describe('Actions', () => {
         .options('/')
         .reply(200, '', {
           link: [
-            `<${login}>; rel="https://solid.github.io/vocab/solid-terms.ttl#loginEndpoint"`,
-            `<${logout}>; rel="https://solid.github.io/vocab/solid-terms.ttl#logoutEndpoint"`,
-            `<${twinql}>; rel="https://solid.github.io/vocab/solid-terms.ttl#twinqlEndpoint"`,
-            `<${proxy}>; rel="https://solid.github.io/vocab/solid-terms.ttl#proxyEndpoint"`
+            `<${login}>; rel="http://solid.github.io/vocab/solid-terms.ttl#loginEndpoint"`,
+            `<${logout}>; rel="http://solid.github.io/vocab/solid-terms.ttl#logoutEndpoint"`,
+            `<${twinql}>; rel="http://solid.github.io/vocab/solid-terms.ttl#twinqlEndpoint"`,
+            `<${proxy}>; rel="http://solid.github.io/vocab/solid-terms.ttl#proxyEndpoint"`
           ].join(',')
         })
 

@@ -18,7 +18,8 @@ export class EditableBookmarksList extends React.Component {
     const { bookmarks, selectedTags, showArchived } = this.props
     return bookmarks.filter(bookmark => {
       const data = bookmark.get('data')
-      const tagInFilters = selectedTags.size ? selectedTags.intersect(data.get('book:hasTopic')).size > 0 : true
+      const tags = data.get('book:hasTopic').map(topic => topic.get('@value'))
+      const tagInFilters = selectedTags.size ? selectedTags.intersect(tags).size > 0 : true
       const fulfillsArchiveFilter = showArchived
         ? true
         : !JSON.parse(data.getIn(['solid:read', '@value']))

@@ -45,6 +45,7 @@ const jsonLdValueToNT = (value, context) => {
         if (lang) {
           return `"${raw}"@${lang}`
         }
+        return `"${raw}"`
       }
     default: // eslint-disable-line
       throw new Error(`Unrecognized JSON-LD value: ${value}`)

@@ -19,13 +19,13 @@ export class BookmarksFilter extends React.Component {
 
   getTags () {
     return this.props.bookmarks
-      .map(bookmark => bookmark.getIn(['data', 'book:hasTopic']))
+      .map(bookmark => bookmark.getIn(['data', 'book:hasTopic']).map(tag => tag.get('@value')))
       .reduce((allTags, curTags) => allTags.union(curTags), Immutable.Set())
   }
 
   handleSelectTag (tag) {
     return () => {
-      this.setState({tagFilterInput: ''})
+      this.setState({ tagFilterInput: '' })
       this.props.actions.addFilterTag(tag)
     }
   }
@@ -39,7 +39,7 @@ export class BookmarksFilter extends React.Component {
   }
 
   handleTagFilterInput (event) {
-    this.setState({tagFilterInput: event.target.value})
+    this.setState({ tagFilterInput: event.target.value })
   }
 
   handleShowArchived (event) {
