@@ -25,10 +25,10 @@ export default function BookmarksList ({ bookmarks, handleCancelEditing, handleC
               </ListGroupItem>
               : <ListGroupItem key={bookmark.getIn(['data', 'book:recalls', '@id'])}>
                 <Bookmark
-                  title={bookmark.getIn(['data', 'dc:title'])}
+                  title={bookmark.getIn(['data', 'dc:title', '@value'])}
                   url={bookmark.getIn(['data', 'book:recalls', '@id'])}
-                  tags={bookmark.getIn(['data', 'book:hasTopic'])}
-                  comments={bookmark.getIn(['data', 'dc:description'])}
+                  tags={bookmark.getIn(['data', 'book:hasTopic']).map(tag => tag.get('@value'))}
+                  comments={bookmark.getIn(['data', 'dc:description', '@value'])}
                   onClickEdit={handleClickEdit(bookmark)}
                   handleSelectTag={handleSelectTag}
                 />

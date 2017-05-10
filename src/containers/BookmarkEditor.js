@@ -15,6 +15,7 @@ export class BookmarkEditor extends React.Component {
     this.processTagsInput = this.processTagsInput.bind(this)
     this.processArchivedInput = this.processArchivedInput.bind(this)
     this.processUriInput = this.processUriInput.bind(this)
+    this.processLiteralInput = this.processLiteralInput.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
   }
 
@@ -32,17 +33,17 @@ export class BookmarkEditor extends React.Component {
     const { bookmark } = this.props
     return {
       bookmark: this.initialBookmark,
-      rawTagsInput: bookmark.getIn(['data', 'book:hasTopic']).join(', '),
+      rawTagsInput: bookmark.getIn(['data', 'book:hasTopic']).map(tag => tag.get('@value')).join(', '),
       isValid: false
     }
   }
 
   isBookmarkValid (bookmark) {
-    return isUri(bookmark.getIn(['book:recalls', '@id'])) && bookmark.get('dc:title').length > 0 &&
+    return isUri(bookmark.getIn(['book:recalls', '@id'])) && bookmark.getIn(['dc:title', '@value']).length > 0 &&
       !this.props.bookmark.get('data').equals(bookmark)
   }
 
-  handleFormFieldChange (fieldName, processEvent = event => event.target.value) {
+  handleFormFieldChange (fieldName, processEvent = this.processLiteralInput) {
     return (event) => {
       const bookmark = this.state.bookmark
         .merge({ [fieldName]: processEvent(event) })
@@ -61,7 +62,7 @@ export class BookmarkEditor extends React.Component {
       rawTagsInput
         .split(',')
         .filter(tag => tag.length > 0)
-        .map(tag => tag.trim())
+        .map(tag => Immutable.Map({ '@value': tag.trim() }))
       )
   }
 
@@ -74,6 +75,10 @@ export class BookmarkEditor extends React.Component {
 
   processUriInput (event) {
     return { '@id': event.target.value }
+  }
+
+  processLiteralInput (event) {
+    return { '@value': event.target.value }
   }
 
   handleSubmit (event) {
@@ -93,10 +98,10 @@ export class BookmarkEditor extends React.Component {
 
   render () {
     const props = {
-      title: this.state.bookmark.get('dc:title'),
+      title: this.state.bookmark.getIn(['dc:title', '@value']),
       url: this.state.bookmark.getIn(['book:recalls', '@id']),
       tags: this.state.rawTagsInput,
-      description: this.state.bookmark.get('dc:description'),
+      description: this.state.bookmark.getIn(['dc:description', '@value']),
       archived: JSON.parse(this.state.bookmark.getIn(['solid:read', '@value'])),
       isValid: this.state.isValid,
       handleChangeTitle: this.handleFormFieldChange('dc:title'),
