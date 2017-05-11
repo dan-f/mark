@@ -1,6 +1,14 @@
 {
-  "presets": ["es2015", "react"],
-  "plugins": ["react-hot-loader/babel", "transform-object-rest-spread"],
+  "presets": [
+    ["env", {
+      "targets": {
+        "browsers": ["last 2 versions", "safari >= 7"]
+      },
+      "include": ["transform-es2015-spread"]
+    }],
+    "react"
+  ],
+  "plugins": ["transform-object-rest-spread", "transform-class-properties"],
   "env": {
     "test": {
       "plugins": ["istanbul"]

@@ -3,13 +3,15 @@ import { combineReducers } from 'redux'
 
 import * as ActionTypes from './actionTypes'
 
-const initialAuthState = { webId: null, key: null }
+const initialAuthState = { webId: null, key: null, lastIdp: '' }
 export function auth (state = initialAuthState, action) {
   switch (action.type) {
     case ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS:
-      return { webId: action.webId, key: action.key }
+      return { ...state, webId: action.webId, key: action.key }
     case ActionTypes.BOOKMARKS_CLEAR_AUTH_CREDENTIALS:
-      return initialAuthState
+      return { ...state, webId: null, key: null }
+    case ActionTypes.BOOKMARKS_SAVE_LAST_IDP:
+      return { ...state, lastIdp: action.lastIdp }
     default:
       return state
   }
