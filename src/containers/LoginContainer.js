@@ -68,7 +68,7 @@ export class LoginContainer extends React.Component {
       .then(maybeInstallAppResources)
       .then(bookmarksContainer => {
         this.setState({ loggingIn: false })
-        history.push(`/m/${bookmarksContainer}`)
+        history.push(`/m/`)
       })
       .catch(() => this.setState({ loggingIn: false }))
   }

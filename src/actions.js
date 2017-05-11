@@ -45,7 +45,7 @@ export const loadProfile = () => (dispatch, getState) => {
   const { auth: { webId } } = getState()
   dispatch(loadProfileRequest())
   return dispatch(twinql(`
-    @prefix foaf http://xmlns.com/foaf/0.1/
+    @prefix foaf ${PREFIX_CONTEXT.foaf}
     ${webId} {
       foaf:img
     }
@@ -129,6 +129,71 @@ export function clearEndpoints (endpoints) {
   }
 }
 
+// Bookmark list discovery
+
+export const findLists = () => (dispatch, getState) => {
+  const { auth: { webId } } = getState()
+  const socialTraversal = `
+    foaf:name
+    foaf:img
+  `
+  const listTraversal = `
+    solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
+      solid:instanceContainer
+    }
+  `
+  dispatch(findListsRequest())
+  return dispatch(twinql(`
+    @prefix rdf   ${PREFIX_CONTEXT.rdf}
+    @prefix book  ${PREFIX_CONTEXT.book}
+    @prefix foaf ${PREFIX_CONTEXT.foaf}
+    @prefix solid ${PREFIX_CONTEXT.solid}
+    ${webId} {
+      ${socialTraversal}
+      ${listTraversal}
+      [ foaf:knows ] {
+        ${socialTraversal}
+        ${listTraversal}
+      }
+    }
+  `)).then(response => {
+    if (response['@error']) {
+      const error = new Error(response['@error'].message)
+      throw error
+    }
+    return response
+  }).then(response => {
+    const getList = resp => ({
+      webId: resp['@id'],
+      name: resp['foaf:name'] ? resp['foaf:name']['@value'] : resp['@id'],
+      img: resp['foaf:img'] ? resp['foaf:img']['@id'] : '/solid-logo.svg',
+      listUrl: resp['solid:publicTypeIndex']['@graph'][0]['solid:instanceContainer']['@id']
+    })
+    const justMarkUsers = person => (
+      person['solid:publicTypeIndex'] &&
+      !person['solid:publicTypeIndex']['@error'] &&
+      person['solid:publicTypeIndex']['@graph'].length &&
+      person['solid:publicTypeIndex']['@graph'][0]['solid:instanceContainer']
+    )
+    return [ getList(response), ...response['foaf:knows'].filter(justMarkUsers).map(getList) ]
+  }).then(lists =>
+    dispatch(findListsSuccess(lists))
+  ).catch(error => {
+    const { message } = error
+    dispatch(setError({ heading: `Couldn't find your/your friends' bookmarks lists`, message }))
+    throw error
+  })
+}
+
+export const findListsRequest = () => ({
+  type: ActionTypes.BOOKMARKS_FIND_LISTS_REQUEST
+})
+
+export const findListsSuccess = lists => ({
+  type: ActionTypes.BOOKMARKS_FIND_LISTS_SUCCESS,
+  lists
+})
+
 // Bookmark application install
 
 export function maybeInstallAppResources () {
@@ -144,9 +209,9 @@ export function getBookmarksContainer () {
   return (dispatch, getState) => {
     const { auth: { webId } } = getState()
     return dispatch(twinql(`
-      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
-      @prefix book  http://www.w3.org/2002/01/bookmark#
+      @prefix rdf   ${PREFIX_CONTEXT.rdf}
+      @prefix solid ${PREFIX_CONTEXT.solid}
+      @prefix book  ${PREFIX_CONTEXT.book}
       ${webId} {
         solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
           solid:instanceContainer
@@ -174,7 +239,7 @@ export function createBookmarksContainer () {
     const { auth: { webId, key }, endpoints: { proxy } } = getState()
     dispatch(createBookmarksContainerRequest())
     return dispatch(twinql(`
-      @prefix pim http://www.w3.org/ns/pim/space#
+      @prefix pim ${PREFIX_CONTEXT.pim}
       ${webId} { pim:storage }
     `)).then(response => {
       const error = response['@error']
@@ -225,12 +290,12 @@ export function registerBookmarksContainer (bookmarksContainer) {
   return (dispatch, getState) => {
     const { auth: { webId, key }, endpoints: { proxy } } = getState()
     return dispatch(twinql(`
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix solid ${PREFIX_CONTEXT.solid}
       ${webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
-      const book = 'http://www.w3.org/2002/01/bookmark#'
-      const solid = 'http://www.w3.org/ns/solid/terms#'
+      const book = PREFIX_CONTEXT.book
+      const solid = PREFIX_CONTEXT.solid
       const registrationId = uuid.v4()
       const registrationTriples = [
         `<#${registrationId}> a <${solid}TypeRegistration> .`,
@@ -303,11 +368,11 @@ export function loadBookmarks (containerUrl) {
   return (dispatch, getState) => {
     dispatch(loadBookmarksRequest(containerUrl))
     return dispatch(twinql(`
-      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix book  http://www.w3.org/2002/01/bookmark#
-      @prefix dc    http://purl.org/dc/elements/1.1/
-      @prefix ldp   http://www.w3.org/ns/ldp#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix rdf   ${PREFIX_CONTEXT.rdf}
+      @prefix book  ${PREFIX_CONTEXT.book}
+      @prefix dc    ${PREFIX_CONTEXT.dc}
+      @prefix ldp   ${PREFIX_CONTEXT.ldp}
+      @prefix solid ${PREFIX_CONTEXT.solid}
       ${containerUrl} {
         [ ldp:contains ] => ( rdf:type book:Bookmark ) {
           dc:title
@@ -339,14 +404,14 @@ export function loadBookmarks (containerUrl) {
 
 export function loadBookmarksRequest (url) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_REQUEST,
+    type: ActionTypes.BOOKMARKS_LOAD_LIST_REQUEST,
     url
   }
 }
 
 export function loadBookmarksSuccess (bookmarks) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_SUCCESS,
+    type: ActionTypes.BOOKMARKS_LOAD_LIST_SUCCESS,
     bookmarks
   }
 }

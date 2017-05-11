@@ -53,7 +53,7 @@ export function bookmarks (state = Immutable.Map(), action) {
       ? action.bookmark.getIn(['data', '@id'])
       : null
   switch (action.type) {
-    case ActionTypes.BOOKMARKS_LOAD_SUCCESS:
+    case ActionTypes.BOOKMARKS_LOAD_LIST_SUCCESS:
       return action.bookmarks.map(bookmark =>
         Immutable.Map({
           isEditing: false,
@@ -121,10 +121,20 @@ export function alerts (state = Immutable.Map(), action) {
   }
 }
 
+export function lists (state = [], action) {
+  switch (action.type) {
+    case ActionTypes.BOOKMARKS_FIND_LISTS_SUCCESS:
+      return action.lists
+    default:
+      return state
+  }
+}
+
 export default combineReducers({
   auth,
   profile,
   endpoints,
+  lists,
   bookmarks,
   filters,
   alerts

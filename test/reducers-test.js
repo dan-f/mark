@@ -139,7 +139,7 @@ describe('Reducers', () => {
       const expectedBookmarks = Immutable.fromJS({
         [bookmark.get('@id')]: { isEditing: false, isNew: false, data: bookmark }
       })
-      const action = { type: AT.BOOKMARKS_LOAD_SUCCESS, bookmarks: actionBookmarks }
+      const action = { type: AT.BOOKMARKS_LOAD_LIST_SUCCESS, bookmarks: actionBookmarks }
       expect(Reducers.bookmarks(undefined, action)).to.eql(expectedBookmarks)
     })
 

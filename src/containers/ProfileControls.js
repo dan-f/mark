@@ -35,7 +35,7 @@ class ProfileControls extends Component {
       ? (
         <Dropdown open={this.state.open} ariaLabel='Account actions'>
           <button type='button' className='btn-link dropdown-toggle' onClick={handleClickDropdown}>
-            <img src={img} width='30' height='30' alt="User's profile image" />
+            <img className='img-rounded' src={img} width='30' height='30' alt="User's profile image" />
           </button>
           <DropdownItem>
             <a href={`https://linkeddata.github.io/profile-editor/#/profile/view?webid=${encodeURIComponent(webId)}`} target='_blank' className='mx-1'>

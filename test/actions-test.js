@@ -487,8 +487,8 @@ describe('Actions', () => {
         .then(() => {
           const actions = store.getActions()
           expect(actions.length).to.equal(2)
-          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl })
-          expect(actions[1].type).to.eql(AT.BOOKMARKS_LOAD_SUCCESS)
+          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_LIST_REQUEST, url: containerUrl })
+          expect(actions[1].type).to.eql(AT.BOOKMARKS_LOAD_LIST_SUCCESS)
           expect(actions[1].bookmarks).to.eql(expectedBookmarks)
         })
     })
@@ -503,7 +503,7 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadBookmarks(containerUrl))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl },
+            { type: AT.BOOKMARKS_LOAD_LIST_REQUEST, url: containerUrl },
             {
               type: AT.BOOKMARKS_ALERT_SET,
               kind: 'danger',
