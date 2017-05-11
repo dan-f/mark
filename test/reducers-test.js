@@ -20,25 +20,40 @@ describe('Reducers', () => {
   }
 
   describe('auth', () => {
-    it('saves auth credentials', () => {
+    it('saves auth credentials (without overwriting the last idp)', () => {
       const webId = 'https://localhost:8443/profile/card#me'
       const key = 'abc123'
+      const lastIdp = 'https://example.com/'
       expect(
-        Reducers.auth({}, {
+        Reducers.auth({ webId: null, key: null, lastIdp }, {
           type: AT.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
           webId,
           key
         })
-      ).to.eql({ webId, key })
+      ).to.eql({ webId, key, lastIdp })
     })
 
-    it('clears auth credentials', () => {
+    it('clears auth credentials (without clearing the last idp)', () => {
+      const lastIdp = 'https://example.com/'
       expect(
         Reducers.auth({
           webId: 'https://localhost:8443/profile/card#me',
-          key: 'abc123'
+          key: 'abc123',
+          lastIdp
         }, { type: AT.BOOKMARKS_CLEAR_AUTH_CREDENTIALS })
-      ).to.eql({ webId: null, key: null })
+      ).to.eql({ webId: null, key: null, lastIdp })
+    })
+
+    it('saves the last idp (without changing the webId or key)', () => {
+      const webId = 'https://localhost:8443/profile/card#me'
+      const key = 'abc123'
+      const lastIdp = 'https://example.com/'
+      expect(
+        Reducers.auth({ webId, key }, {
+          type: AT.BOOKMARKS_SAVE_LAST_IDP,
+          lastIdp
+        })
+      ).to.eql({ webId, key, lastIdp })
     })
 
     it('ignores unrecognized actions', () => {

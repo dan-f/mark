@@ -29,6 +29,11 @@ export const clearCredentials = () => ({
   type: ActionTypes.BOOKMARKS_CLEAR_AUTH_CREDENTIALS
 })
 
+export const saveLastIdp = lastIdp => ({
+  type: ActionTypes.BOOKMARKS_SAVE_LAST_IDP,
+  lastIdp
+})
+
 export const logout = () => dispatch => {
   dispatch(clearCredentials())
   dispatch(clearProfile())

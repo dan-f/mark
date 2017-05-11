@@ -657,7 +657,17 @@ describe('Actions', () => {
       const key = 'qwertyuiop'
       store.dispatch(Actions.saveCredentials({ webId, key }))
       expect(store.getActions()).to.eql(
-        [{ type: 'BOOKMARKS_SAVE_AUTH_CREDENTIALS', webId, key }]
+        [{ type: AT.BOOKMARKS_SAVE_AUTH_CREDENTIALS, webId, key }]
+      )
+    })
+  })
+
+  describe('saveLastIdp', () => {
+    it('saves the last IDP', () => {
+      const lastIdp = 'https://example.com/'
+      store.dispatch(Actions.saveLastIdp(lastIdp))
+      expect(store.getActions()).to.eql(
+        [{ type: AT.BOOKMARKS_SAVE_LAST_IDP, lastIdp }]
       )
     })
   })

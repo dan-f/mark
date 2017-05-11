@@ -9,17 +9,45 @@ import * as Actions from '../actions'
 import LoginPage from '../components/LoginPage'
 
 export class LoginContainer extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      loggingIn: false,
-      loginUiOpen: false,
-      loginServer: ''
+  state = {
+    loggingIn: false,
+    loginUiOpen: false,
+    loginServer: this.props.auth.lastIdp
+  }
+
+  onClickLogin = () => {
+    this.setState({ loginUiOpen: true })
+  }
+
+  onClickCancel = () => {
+    this.setState({ loginUiOpen: false, loginServer: this.props.auth.lastIdp })
+  }
+
+  onChangeLoginServer = event => {
+    this.setState({ loginServer: event.target.value })
+  }
+
+  onSubmitLogin = event => {
+    event.preventDefault()
+    this.redirectToIdpLogin()
+  }
+
+  redirectToIdpLogin = webId => {
+    const { findEndpoints, saveLastIdp } = this.props.actions
+    let loginServer = webId || this.state.loginServer.trim()
+    if (!loginServer) {
+      return
     }
-    this.handleClickLogin = this.handleClickLogin.bind(this)
-    this.handleChangeLoginServer = this.handleChangeLoginServer.bind(this)
-    this.handleCancel = this.handleCancel.bind(this)
-    this.handleSubmit = this.handleSubmit.bind(this)
+    if (!/^http(s)?:\/\//.test(loginServer)) {
+      loginServer = `https://${loginServer}`
+    }
+    findEndpoints(loginServer)
+      .then(action => {
+        saveLastIdp(loginServer)
+        window.location.assign(
+          `${action.endpoints.login}?redirect=${window.location.href}&origin=${window.location.origin}`
+        )
+      })
   }
 
   componentDidMount () {
@@ -45,41 +73,18 @@ export class LoginContainer extends React.Component {
       .catch(() => this.setState({ loggingIn: false }))
   }
 
-  handleClickLogin () {
-    this.setState({ loginUiOpen: true })
-  }
-
-  handleChangeLoginServer (event) {
-    this.setState({ loginServer: event.target.value })
-  }
-
-  handleCancel () {
-    this.setState({ loginUiOpen: false, loginServer: '' })
-  }
-
-  handleSubmit (event) {
-    event.preventDefault()
-    const { findEndpoints } = this.props.actions
-    let { loginServer } = this.state
-    loginServer = loginServer.trim()
-    if (!loginServer) {
-      return
-    }
-    if (!/^http(s)?:\/\//.test(loginServer)) {
-      loginServer = `https://${loginServer}`
-    }
-    findEndpoints(loginServer)
-      .then(action =>
-        window.location.assign(
-          `${action.endpoints.login}?redirect=${window.location.href}&origin=${window.location.origin}`
-        )
-      )
-  }
-
   render () {
-    const { loginUiOpen, loggingIn } = this.state
-    const { handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit } = this
-    const props = { loginUiOpen, handleClickLogin, handleChangeLoginServer, handleCancel, handleSubmit }
+    const { loginUiOpen, loggingIn, loginServer } = this.state
+    const { onClickLogin, onChangeLoginServer, onClickCancel, onSubmitLogin, redirectToIdpLogin } = this
+    const props = {
+      loginUiOpen,
+      loginServer,
+      onClickLogin,
+      onChangeLoginServer,
+      onClickCancel,
+      onSubmitLogin,
+      redirectToIdpLogin
+    }
     return (
       <Loadable active={loggingIn} spinner background='#FFFFFF' color='#000'>
         <LoginPage {...props} />
