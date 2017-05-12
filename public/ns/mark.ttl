@@ -1,0 +1,12 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+@prefix book: <http://www.w3.org/2002/01/bookmark#> .
+@prefix ldp: <http://www.w3.org/ns/ldp#> .
+
+
+<#BookmarkList> a ldp:Container
+  ; rdfs:isDefinedBy <./>
+  ; rdfs:label "BookmarkList"
+  ; rdfs:comment "A container of Bookmarks"
+  .
