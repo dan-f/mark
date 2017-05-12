@@ -6,7 +6,7 @@
 
 
 <#BookmarkList> a ldp:Container
-  ; rdfs:isDefinedBy <./>
+  ; rdfs:isDefinedBy <>
   ; rdfs:label "BookmarkList"
   ; rdfs:comment "A container of Bookmarks"
   .
