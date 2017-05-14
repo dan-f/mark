@@ -37,7 +37,7 @@ class BookmarksListManager extends React.Component {
   render () {
     const { loading } = this.state
     return (
-      <Loadable active={loading} spinner background='#FFFFFF' color='#000'>
+      <Loadable active={loading} text='Loading...' background='#FFF' color='#000'>
         <FilterableBookmarksList />
       </Loadable>
     )

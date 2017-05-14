@@ -176,6 +176,6 @@ export function markDataContainer (storageUrl) {
  * Given the base url of a user's solid server, describes where bookmarks are
  * expected to reside.
  */
-export function defaultBookmarksUrl (storageUrl) {
+export function defaultBookmarkListContainerUrl (storageUrl) {
   return urljoin(markDataContainer(storageUrl), 'bookmarks', '/')
 }

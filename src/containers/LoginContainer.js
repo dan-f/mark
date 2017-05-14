@@ -86,7 +86,7 @@ export class LoginContainer extends React.Component {
       redirectToIdpLogin
     }
     return (
-      <Loadable active={loggingIn} spinner background='#FFFFFF' color='#000'>
+      <Loadable active={loggingIn} background='#FFFFFF' color='#000'>
         <LoginPage {...props} />
       </Loadable>
     )

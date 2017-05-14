@@ -13,6 +13,7 @@ const PREFIX_CONTEXT = {
   dc: 'http://purl.org/dc/elements/1.1/',
   foaf: 'http://xmlns.com/foaf/0.1/',
   ldp: 'http://www.w3.org/ns/ldp#',
+  mark: 'http://raw.githubusercontent.com/dan-f/mark/social-bookmarks/public/ns/mark.ttl#',
   pim: 'http://www.w3.org/ns/pim/space#',
   solid: 'http://solid.github.io/vocab/solid-terms.ttl#'
 }
@@ -37,13 +38,13 @@ export const saveLastIdp = lastIdp => ({
 export const logout = () => dispatch => {
   dispatch(clearCredentials())
   dispatch(clearProfile())
+  dispatch(clearError())
 }
 
 // Profile
 
 export const loadProfile = () => (dispatch, getState) => {
   const { auth: { webId } } = getState()
-  dispatch(loadProfileRequest())
   return dispatch(twinql(`
     @prefix foaf ${PREFIX_CONTEXT.foaf}
     ${webId} {
@@ -66,10 +67,6 @@ export const loadProfile = () => (dispatch, getState) => {
 
 export const clearProfile = () => ({
   type: ActionTypes.BOOKMARKS_CLEAR_PROFILE
-})
-
-export const loadProfileRequest = () => ({
-  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST
 })
 
 export const loadProfileSuccess = profile => ({
@@ -138,15 +135,18 @@ export const findLists = () => (dispatch, getState) => {
     foaf:img
   `
   const listTraversal = `
-    solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
-      solid:instanceContainer
+    solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass mark:BookmarkList ) {
+      solid:instanceContainer {
+        ldp:contains
+      }
     }
   `
-  dispatch(findListsRequest())
   return dispatch(twinql(`
     @prefix rdf   ${PREFIX_CONTEXT.rdf}
     @prefix book  ${PREFIX_CONTEXT.book}
     @prefix foaf ${PREFIX_CONTEXT.foaf}
+    @prefix ldp ${PREFIX_CONTEXT.ldp}
+    @prefix mark ${PREFIX_CONTEXT.mark}
     @prefix solid ${PREFIX_CONTEXT.solid}
     ${webId} {
       ${socialTraversal}
@@ -185,10 +185,6 @@ export const findLists = () => (dispatch, getState) => {
   })
 }
 
-export const findListsRequest = () => ({
-  type: ActionTypes.BOOKMARKS_FIND_LISTS_REQUEST
-})
-
 export const findListsSuccess = lists => ({
   type: ActionTypes.BOOKMARKS_FIND_LISTS_SUCCESS,
   lists
@@ -210,10 +206,11 @@ export function getBookmarksContainer () {
     const { auth: { webId } } = getState()
     return dispatch(twinql(`
       @prefix rdf   ${PREFIX_CONTEXT.rdf}
+      @prefix mark ${PREFIX_CONTEXT.mark}
       @prefix solid ${PREFIX_CONTEXT.solid}
       @prefix book  ${PREFIX_CONTEXT.book}
       ${webId} {
-        solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
+        solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass mark:BookmarkList ) {
           solid:instanceContainer
         }
       }
@@ -237,45 +234,61 @@ export function getBookmarksContainer () {
 export function createBookmarksContainer () {
   return (dispatch, getState) => {
     const { auth: { webId, key }, endpoints: { proxy } } = getState()
-    dispatch(createBookmarksContainerRequest())
-    return dispatch(twinql(`
-      @prefix pim ${PREFIX_CONTEXT.pim}
-      ${webId} { pim:storage }
-    `)).then(response => {
-      const error = response['@error']
-      const storage = response['pim:storage']
-      if (error) {
-        throw new Error(error.message)
-      }
-      if (!storage) {
-        throw new Error('User has no pim:storage')
-      }
-      return storage
-    }).then(storage => {
-      const bookmarksContainer = utils.defaultBookmarksUrl(storage['@id'])
-      const proxiedContainerUrl = utils.proxyUrl(proxy, urljoin(bookmarksContainer, '.config'), key)
-      return fetch(proxiedContainerUrl, { method: 'HEAD' })
+
+    const findStorage = () =>
+      dispatch(twinql(`
+        @prefix pim ${PREFIX_CONTEXT.pim}
+        ${webId} { pim:storage }
+      `)).then(response => {
+        const error = response['@error']
+        const storage = response['pim:storage']
+        if (error) {
+          throw new Error(error.message)
+        }
+        if (!storage) {
+          throw new Error('User has no pim:storage')
+        }
+        return storage
+      })
+
+    const findListContainer = storage => {
+      const bookmarkListContainer = utils.defaultBookmarkListContainerUrl(storage['@id'])
+      const defaultBookmarkList = urljoin(bookmarkListContainer, 'default', '/')
+      const proxiedDefaultListUrl = utils.proxyUrl(proxy, defaultBookmarkList, key)
+      return fetch(proxiedDefaultListUrl, { method: 'HEAD' })
         .then(response =>
           response.status >= 200 && response.status < 300
-            ? response
-            : fetch(proxiedContainerUrl, { method: 'PUT' }).then(utils.checkStatus)
+            ? [ bookmarkListContainer, true ]
+            : [ bookmarkListContainer, false ]
         )
-        .then(() => bookmarksContainer)
-    }).then(bookmarksContainer => {
-      dispatch(createBookmarksContainerSuccess(bookmarksContainer))
-      return bookmarksContainer
-    })
-    .catch(error => {
-      const { message } = error
-      dispatch(setError({ heading: `Couldn't install your bookmarks container`, message }))
-      throw error
-    })
-  }
-}
+    }
 
-export function createBookmarksContainerRequest () {
-  return {
-    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_REQUEST
+    const createListContainer = bookmarkListContainer => {
+      const defaultBookmarkList = urljoin(bookmarkListContainer, 'default', '/')
+      const proxiedDefaultListUrl = utils.proxyUrl(proxy, defaultBookmarkList, key)
+      return fetch(proxiedDefaultListUrl, {
+        method: 'PUT',
+        headers: { link: [ `<${PREFIX_CONTEXT.ldp}BasicContainer>; rel="type"` ] }
+      }).then(utils.checkStatus).then(response => {
+        const metaUrl = utils.parseLinkHeader(response.headers.get('link'))['meta'][0]
+        const body = `<> a <${PREFIX_CONTEXT.mark}BookmarkList> .`
+        return utils.sparqlPatch(utils.proxyUrl(proxy, metaUrl, key), [] [ body ])
+      }).then(utils.checkStatus).then(() => {
+        dispatch(createBookmarksContainerSuccess(bookmarkListContainer))
+        return bookmarkListContainer
+      })
+    }
+
+    return findStorage()
+      .then(findListContainer)
+      .then(([ bookmarkListContainer, exists ]) =>
+        exists ? bookmarkListContainer : createListContainer(bookmarkListContainer)
+      )
+      .catch(error => {
+        const { message } = error
+        dispatch(setError({ heading: `Couldn't install your bookmarks container`, message }))
+        throw error
+      })
   }
 }
 
@@ -294,15 +307,14 @@ export function registerBookmarksContainer (bookmarksContainer) {
       ${webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
-      const book = PREFIX_CONTEXT.book
+      const mark = PREFIX_CONTEXT.mark
       const solid = PREFIX_CONTEXT.solid
       const registrationId = uuid.v4()
       const registrationTriples = [
         `<#${registrationId}> a <${solid}TypeRegistration> .`,
-        `<#${registrationId}> <${solid}forClass> <${book}Bookmark> .`,
+        `<#${registrationId}> <${solid}forClass> <${mark}BookmarkList> .`,
         `<#${registrationId}> <${solid}instanceContainer> <${bookmarksContainer}> .`
       ]
-      dispatch(registerBookmarksRequest())
       return utils.sparqlPatch(utils.proxyUrl(proxy, publicTypeIndex, key), [], registrationTriples)
     }).then(() => {
       dispatch(registerBookmarksSuccess(bookmarksContainer))
@@ -313,12 +325,6 @@ export function registerBookmarksContainer (bookmarksContainer) {
       dispatch(setError({ heading: `Couldn't update your bookmarks type registration`, message }))
       throw error
     })
-  }
-}
-
-export function registerBookmarksRequest () {
-  return {
-    type: ActionTypes.BOOKMARKS_REGISTER_REQUEST
   }
 }
 
@@ -338,7 +344,6 @@ export function saveBookmark (original, updated, isNew) {
     const [ url, toDel, toIns ] = isNew
       ? [ grpahOf(updated.get('@id')), [], utils.jsonLdToNT(updated, PREFIX_CONTEXT) ]
       : [ grpahOf(original.get('@id')), ...utils.diff(original, updated, PREFIX_CONTEXT) ]
-    dispatch(saveBookmarkRequest())
     return utils.sparqlPatch(utils.proxyUrl(proxy, url, key), isNew ? [] : toDel, toIns)
       .then(() => dispatch(saveBookmarkSuccess(updated)))
       .catch(error => {
@@ -346,12 +351,6 @@ export function saveBookmark (original, updated, isNew) {
         dispatch(setError({ heading: `Couldn't save your bookmark`, message }))
         throw error
       })
-  }
-}
-
-export function saveBookmarkRequest () {
-  return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_REQUEST
   }
 }
 
@@ -366,7 +365,6 @@ export function saveBookmarkSuccess (bookmark) {
 
 export function loadBookmarks (containerUrl) {
   return (dispatch, getState) => {
-    dispatch(loadBookmarksRequest(containerUrl))
     return dispatch(twinql(`
       @prefix rdf   ${PREFIX_CONTEXT.rdf}
       @prefix book  ${PREFIX_CONTEXT.book}
@@ -399,13 +397,6 @@ export function loadBookmarks (containerUrl) {
       dispatch(setError({ heading: `Couldn't load your bookmarks`, message }))
       throw error
     })
-  }
-}
-
-export function loadBookmarksRequest (url) {
-  return {
-    type: ActionTypes.BOOKMARKS_LOAD_LIST_REQUEST,
-    url
   }
 }
 

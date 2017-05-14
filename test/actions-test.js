@@ -89,9 +89,9 @@ describe('Actions', () => {
   })
 
   describe('maybeInstallAppResources', () => {
-    it('registers bookmarks in the type index and sets the bookmarks url', () => {
+    it.only('registers bookmark lists in the type index and creates a default list', () => {
       noxy('https://localhost:8443/')
-        // Query to test whether the bookmarks container already exists
+        // Query to test whether the bookmark list container already exists
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -105,9 +105,9 @@ describe('Actions', () => {
             '@graph': []
           }
         })
-        // No type registration for bookmarks, hence we're now installing the
-        // app workspace and type registration.
-        // Query to find the storage container
+        // No type registration for bookmark lists, hence we're now installing
+        // the app workspace and type registration. Query to find the storage
+        // container
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -116,11 +116,11 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        // HEAD to test whether the bookmarks container already exists
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        // HEAD to test whether the bookmark list container already exists
+        .proxy('HEAD', '/Applications/mark/lists/default/')
         .reply(404)
         // POST to create the bookmarks container
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .proxy('PUT', '/Applications/mark/lists/default/mark.ttl')
         .reply(200)
         // query to find the public type index
         .post('/,twinql')
@@ -169,9 +169,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .proxy('HEAD', '/Applications/mark/bookmarks/index.ttl')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .proxy('PUT', '/Applications/mark/bookmarks/index.ttl')
         .reply(500)
 
       return store.dispatch(Actions.maybeInstallAppResources())
@@ -279,9 +279,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .proxy('HEAD', '/Applications/mark/bookmarks/index.ttl')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .proxy('PUT', '/Applications/mark/bookmarks/index.ttl')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
@@ -303,7 +303,7 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .proxy('HEAD', '/Applications/mark/bookmarks/index.ttl')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
@@ -352,9 +352,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .proxy('HEAD', '/Applications/mark/bookmarks/index.ttl')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .proxy('PUT', '/Applications/mark/bookmarks/index.ttl')
         .reply(500)
 
       return store.dispatch(Actions.createBookmarksContainer())
