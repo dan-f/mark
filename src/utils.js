@@ -72,7 +72,7 @@ export const diff = (original, updated, context) => {
     .toJS()
 }
 
-export const sparqlPatch = (url, toDel, toIns, headers) =>
+export const sparqlPatch = (url, toDel, toIns, headers = {}) =>
   fetch(url, {
     method: 'PATCH',
     headers: { ...{ 'content-type': 'application/sparql-update' }, ...headers },

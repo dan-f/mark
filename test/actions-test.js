@@ -117,10 +117,10 @@ describe('Actions', () => {
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
         // HEAD to test whether the bookmark list container already exists
-        .proxy('HEAD', '/Applications/mark/lists/default/')
+        .proxy('HEAD', '/Applications/mark/bookmarks/')
         .reply(404)
-        // POST to create the bookmarks container
-        .proxy('PUT', '/Applications/mark/lists/default/mark.ttl')
+        // PUT to create the bookmarks container
+        .proxy('PUT', '/Applications/mark/bookmarks/')
         .reply(200)
         // query to find the public type index
         .post('/,twinql')
@@ -138,9 +138,7 @@ describe('Actions', () => {
       return store.dispatch(Actions.maybeInstallAppResources())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
             { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
             { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })

@@ -253,9 +253,8 @@ export function createBookmarksContainer () {
 
     const findListContainer = storage => {
       const bookmarkListContainer = utils.defaultBookmarkListContainerUrl(storage['@id'])
-      const defaultBookmarkList = urljoin(bookmarkListContainer, 'default', '/')
-      const proxiedDefaultListUrl = utils.proxyUrl(proxy, defaultBookmarkList, key)
-      return fetch(proxiedDefaultListUrl, { method: 'HEAD' })
+      const proxiedListContainer = utils.proxyUrl(proxy, bookmarkListContainer, key)
+      return fetch(proxiedListContainer, { method: 'HEAD' })
         .then(response =>
           response.status >= 200 && response.status < 300
             ? [ bookmarkListContainer, true ]
@@ -264,15 +263,10 @@ export function createBookmarksContainer () {
     }
 
     const createListContainer = bookmarkListContainer => {
-      const defaultBookmarkList = urljoin(bookmarkListContainer, 'default', '/')
-      const proxiedDefaultListUrl = utils.proxyUrl(proxy, defaultBookmarkList, key)
-      return fetch(proxiedDefaultListUrl, {
+      const proxiedListContainer = utils.proxyUrl(proxy, bookmarkListContainer, key)
+      return fetch(proxiedListContainer, {
         method: 'PUT',
         headers: { link: [ `<${PREFIX_CONTEXT.ldp}BasicContainer>; rel="type"` ] }
-      }).then(utils.checkStatus).then(response => {
-        const metaUrl = utils.parseLinkHeader(response.headers.get('link'))['meta'][0]
-        const body = `<> a <${PREFIX_CONTEXT.mark}BookmarkList> .`
-        return utils.sparqlPatch(utils.proxyUrl(proxy, metaUrl, key), [] [ body ])
       }).then(utils.checkStatus).then(() => {
         dispatch(createBookmarksContainerSuccess(bookmarkListContainer))
         return bookmarkListContainer
