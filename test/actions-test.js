@@ -53,9 +53,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadProfile())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            { type: AT.MARK_LOAD_PROFILE_REQUEST },
             {
-              type: AT.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+              type: AT.MARK_LOAD_PROFILE_SUCCESS,
               profile: { 'foaf:img': 'https://localhost:8443/me.jpg' }
             }
           ])
@@ -76,9 +76,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadProfile())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            { type: AT.MARK_LOAD_PROFILE_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't load your profile`,
               message: 'Internal Server Error'
@@ -138,10 +138,10 @@ describe('Actions', () => {
       return store.dispatch(Actions.maybeInstallAppResources())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
+            { type: AT.MARK_REGISTER_REQUEST },
+            { type: AT.MARK_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -177,9 +177,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.maybeInstallAppResources())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -258,7 +258,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't find your Mark installation`,
               message: 'Internal Server Error'
@@ -287,8 +287,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -309,8 +309,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
@@ -331,9 +331,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.createBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -360,9 +360,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.createBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -390,8 +390,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
           ])
         })
     })
@@ -411,8 +411,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(null, bookmark, true))
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark }
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_SUCCESS, bookmark }
           ])
         })
     })
@@ -434,9 +434,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't save your bookmark`,
               message: 'Internal Server Error'
@@ -487,8 +487,8 @@ describe('Actions', () => {
         .then(() => {
           const actions = store.getActions()
           expect(actions.length).to.equal(2)
-          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl })
-          expect(actions[1].type).to.eql(AT.BOOKMARKS_LOAD_SUCCESS)
+          expect(actions[0]).to.eql({ type: AT.MARK_LOAD_REQUEST, url: containerUrl })
+          expect(actions[1].type).to.eql(AT.MARK_LOAD_SUCCESS)
           expect(actions[1].bookmarks).to.eql(expectedBookmarks)
         })
     })
@@ -503,9 +503,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadBookmarks(containerUrl))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl },
+            { type: AT.MARK_LOAD_REQUEST, url: containerUrl },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't load your bookmarks`,
               message: 'Internal Server Error'
@@ -521,7 +521,7 @@ describe('Actions', () => {
       store.dispatch(Actions.createNew())
       const actions = store.getActions()
       expect(actions.length).to.equal(1)
-      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
+      expect(actions[0].type).to.equal(AT.MARK_CREATE_NEW_BOOKMARK)
       expect(actions[0].bookmark.getIn(['rdf:type', '@id'])).to.equal('book:Bookmark')
     })
   })
@@ -531,8 +531,8 @@ describe('Actions', () => {
       store = mockStoreFactory({ bookmarksUrl: 'https://localhost:8443/bookmarks/' })
       store.dispatch(Actions.createAndEditNew())
       const actions = store.getActions()
-      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
-      expect(actions[1].type).to.equal(AT.BOOKMARKS_EDIT_BOOKMARK)
+      expect(actions[0].type).to.equal(AT.MARK_CREATE_NEW_BOOKMARK)
+      expect(actions[1].type).to.equal(AT.MARK_EDIT_BOOKMARK)
     })
   })
 
@@ -540,7 +540,7 @@ describe('Actions', () => {
     it('tells the app to remove the current error', () => {
       store.dispatch(Actions.clearError())
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_ALERT_CLEAR, kind: 'danger' }
+        { type: AT.MARK_ALERT_CLEAR, kind: 'danger' }
       ])
     })
   })
@@ -549,7 +549,7 @@ describe('Actions', () => {
     it('tells the app to quit editing a bookmark', () => {
       store.dispatch(Actions.cancelEdit({}))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_EDIT_BOOKMARK_CANCEL, bookmark: {} }
+        { type: AT.MARK_EDIT_BOOKMARK_CANCEL, bookmark: {} }
       ])
     })
   })
@@ -558,7 +558,7 @@ describe('Actions', () => {
     it('tells the app to add a filter tag', () => {
       store.dispatch(Actions.addFilterTag('foo'))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_ADD_TAG, tag: 'foo' }
+        { type: AT.MARK_FILTER_ADD_TAG, tag: 'foo' }
       ])
     })
   })
@@ -567,7 +567,7 @@ describe('Actions', () => {
     it('tells the app to remove a filter tag', () => {
       store.dispatch(Actions.removeFilterTag('foo'))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_REMOVE_TAG, tag: 'foo' }
+        { type: AT.MARK_FILTER_REMOVE_TAG, tag: 'foo' }
       ])
     })
   })
@@ -577,8 +577,8 @@ describe('Actions', () => {
       store.dispatch(Actions.showArchived(true))
       store.dispatch(Actions.showArchived(false))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: true },
-        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: false }
+        { type: AT.MARK_FILTER_TOGGLE_ARCHIVED, shown: true },
+        { type: AT.MARK_FILTER_TOGGLE_ARCHIVED, shown: false }
       ])
     })
   })
@@ -620,7 +620,7 @@ describe('Actions', () => {
         .then(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_SAVE_ENDPOINTS,
+              type: AT.MARK_SAVE_ENDPOINTS,
               endpoints: { login, logout, twinql, proxy }
             }
           ])
@@ -636,7 +636,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't find data needed to log in`,
               message: 'Internal Server Error'
@@ -657,7 +657,7 @@ describe('Actions', () => {
       const key = 'qwertyuiop'
       store.dispatch(Actions.saveCredentials({ webId, key }))
       expect(store.getActions()).to.eql(
-        [{ type: AT.BOOKMARKS_SAVE_AUTH_CREDENTIALS, webId, key }]
+        [{ type: AT.MARK_SAVE_AUTH_CREDENTIALS, webId, key }]
       )
     })
   })
@@ -667,7 +667,7 @@ describe('Actions', () => {
       const lastIdp = 'https://example.com/'
       store.dispatch(Actions.saveLastIdp(lastIdp))
       expect(store.getActions()).to.eql(
-        [{ type: AT.BOOKMARKS_SAVE_LAST_IDP, lastIdp }]
+        [{ type: AT.MARK_SAVE_LAST_IDP, lastIdp }]
       )
     })
   })

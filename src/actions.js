@@ -20,17 +20,17 @@ const PREFIX_CONTEXT = {
 // Authentication
 
 export const saveCredentials = ({ webId, key }) => ({
-  type: ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
+  type: ActionTypes.MARK_SAVE_AUTH_CREDENTIALS,
   webId,
   key
 })
 
 export const clearCredentials = () => ({
-  type: ActionTypes.BOOKMARKS_CLEAR_AUTH_CREDENTIALS
+  type: ActionTypes.MARK_CLEAR_AUTH_CREDENTIALS
 })
 
 export const saveLastIdp = lastIdp => ({
-  type: ActionTypes.BOOKMARKS_SAVE_LAST_IDP,
+  type: ActionTypes.MARK_SAVE_LAST_IDP,
   lastIdp
 })
 
@@ -65,15 +65,15 @@ export const loadProfile = () => (dispatch, getState) => {
 }
 
 export const clearProfile = () => ({
-  type: ActionTypes.BOOKMARKS_CLEAR_PROFILE
+  type: ActionTypes.MARK_CLEAR_PROFILE
 })
 
 export const loadProfileRequest = () => ({
-  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST
+  type: ActionTypes.MARK_LOAD_PROFILE_REQUEST
 })
 
 export const loadProfileSuccess = profile => ({
-  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+  type: ActionTypes.MARK_LOAD_PROFILE_SUCCESS,
   profile
 })
 
@@ -118,14 +118,14 @@ export function findEndpoints (url) {
 
 export function saveEndpoints (endpoints) {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_ENDPOINTS,
+    type: ActionTypes.MARK_SAVE_ENDPOINTS,
     endpoints
   }
 }
 
 export function clearEndpoints (endpoints) {
   return {
-    type: ActionTypes.BOOKMARKS_CLEAR_ENDPOINTS
+    type: ActionTypes.MARK_CLEAR_ENDPOINTS
   }
 }
 
@@ -210,13 +210,13 @@ export function createBookmarksContainer () {
 
 export function createBookmarksContainerRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_REQUEST
+    type: ActionTypes.MARK_CREATE_CONTAINER_REQUEST
   }
 }
 
 export function createBookmarksContainerSuccess (bookmarksContainerUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_SUCCESS,
+    type: ActionTypes.MARK_CREATE_CONTAINER_SUCCESS,
     bookmarksContainerUrl
   }
 }
@@ -253,13 +253,13 @@ export function registerBookmarksContainer (bookmarksContainer) {
 
 export function registerBookmarksRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_REGISTER_REQUEST
+    type: ActionTypes.MARK_REGISTER_REQUEST
   }
 }
 
 export function registerBookmarksSuccess (bookmarksUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_REGISTER_SUCCESS,
+    type: ActionTypes.MARK_REGISTER_SUCCESS,
     bookmarksUrl
   }
 }
@@ -286,13 +286,13 @@ export function saveBookmark (original, updated, isNew) {
 
 export function saveBookmarkRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_REQUEST
+    type: ActionTypes.MARK_SAVE_BOOKMARK_REQUEST
   }
 }
 
 export function saveBookmarkSuccess (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS,
+    type: ActionTypes.MARK_SAVE_BOOKMARK_SUCCESS,
     bookmark
   }
 }
@@ -339,14 +339,14 @@ export function loadBookmarks (containerUrl) {
 
 export function loadBookmarksRequest (url) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_REQUEST,
+    type: ActionTypes.MARK_LOAD_REQUEST,
     url
   }
 }
 
 export function loadBookmarksSuccess (bookmarks) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_SUCCESS,
+    type: ActionTypes.MARK_LOAD_SUCCESS,
     bookmarks
   }
 }
@@ -355,7 +355,7 @@ export function loadBookmarksSuccess (bookmarks) {
 
 const _setAlert = kind => message => {
   const action = {
-    type: ActionTypes.BOOKMARKS_ALERT_SET,
+    type: ActionTypes.MARK_ALERT_SET,
     kind
   }
   return typeof message === 'object'
@@ -364,7 +364,7 @@ const _setAlert = kind => message => {
 }
 
 const _clearAlert = kind => () => ({
-  type: ActionTypes.BOOKMARKS_ALERT_CLEAR,
+  type: ActionTypes.MARK_ALERT_CLEAR,
   kind
 })
 
@@ -380,14 +380,14 @@ export const clearInfo = _clearAlert('info')
 
 export function edit (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK,
+    type: ActionTypes.MARK_EDIT_BOOKMARK,
     bookmark
   }
 }
 
 export function cancelEdit (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL,
+    type: ActionTypes.MARK_EDIT_BOOKMARK_CANCEL,
     bookmark
   }
 }
@@ -408,7 +408,7 @@ export function createAndEditNew (bookmarksContainer) {
 
 function newBookmark (bookmarkUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
+    type: ActionTypes.MARK_CREATE_NEW_BOOKMARK,
     bookmark: Immutable.fromJS({
       '@id': `${bookmarkUrl}#bookmark`,
       'rdf:type': { '@id': 'book:Bookmark' },
@@ -428,21 +428,21 @@ function newBookmark (bookmarkUrl) {
 
 export function addFilterTag (tag) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_ADD_TAG,
+    type: ActionTypes.MARK_FILTER_ADD_TAG,
     tag
   }
 }
 
 export function removeFilterTag (tag) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_REMOVE_TAG,
+    type: ActionTypes.MARK_FILTER_REMOVE_TAG,
     tag
   }
 }
 
 export function showArchived (shown) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED,
+    type: ActionTypes.MARK_FILTER_TOGGLE_ARCHIVED,
     shown
   }
 }
