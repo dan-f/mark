@@ -76,6 +76,7 @@
     "redux-logger": "^2.7.0",
     "redux-thunk": "^2.1.0",
     "serve-static": "^1.12.1",
+    "solid-auth-client": "^0.1.0",
     "solid-auth-tls": "^0.1.2",
     "solid-web-client": "^0.3.0",
     "url-join": "^1.1.0",
