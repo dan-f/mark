@@ -14,7 +14,7 @@ const PREFIX_CONTEXT = {
   foaf: 'http://xmlns.com/foaf/0.1/',
   ldp: 'http://www.w3.org/ns/ldp#',
   pim: 'http://www.w3.org/ns/pim/space#',
-  solid: 'http://solid.github.io/vocab/solid-terms.ttl#'
+  solid: 'http://www.w3.org/ns/solid/terms#'
 }
 
 // Authentication
@@ -94,13 +94,11 @@ export function twinql (query) {
 
 export function findEndpoints (url) {
   return dispatch => {
-    const solidTerms = term =>
-      `http://solid.github.io/vocab/solid-terms.ttl#${term}`
     return fetch(url, { method: 'OPTIONS' })
       .then(utils.checkStatus)
       .then(response => {
         const linkHeaders = utils.parseLinkHeader(response.headers.get('link'))
-        const getTerm = term => linkHeaders[solidTerms(term + 'Endpoint')][0]
+        const getTerm = term => linkHeaders[PREFIX_CONTEXT.solid + term + 'Endpoint'][0]
         return dispatch(saveEndpoints({
           login: getTerm('login'),
           logout: getTerm('logout'),
@@ -145,7 +143,7 @@ export function getBookmarksContainer () {
     const { auth: { webId } } = getState()
     return dispatch(twinql(`
       @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix solid ${PREFIX_CONTEXT.solid}
       @prefix book  http://www.w3.org/2002/01/bookmark#
       ${webId} {
         solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
@@ -225,17 +223,15 @@ export function registerBookmarksContainer (bookmarksContainer) {
   return (dispatch, getState) => {
     const { auth: { webId, key }, endpoints: { proxy } } = getState()
     return dispatch(twinql(`
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix solid ${PREFIX_CONTEXT.solid}
       ${webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
-      const book = 'http://www.w3.org/2002/01/bookmark#'
-      const solid = 'http://www.w3.org/ns/solid/terms#'
       const registrationId = uuid.v4()
       const registrationTriples = [
-        `<#${registrationId}> a <${solid}TypeRegistration> .`,
-        `<#${registrationId}> <${solid}forClass> <${book}Bookmark> .`,
-        `<#${registrationId}> <${solid}instanceContainer> <${bookmarksContainer}> .`
+        `<#${registrationId}> a <${PREFIX_CONTEXT.solid}TypeRegistration> .`,
+        `<#${registrationId}> <${PREFIX_CONTEXT.solid}forClass> <${PREFIX_CONTEXT.book}Bookmark> .`,
+        `<#${registrationId}> <${PREFIX_CONTEXT.solid}instanceContainer> <${bookmarksContainer}> .`
       ]
       dispatch(registerBookmarksRequest())
       return utils.sparqlPatch(utils.proxyUrl(proxy, publicTypeIndex, key), [], registrationTriples)
@@ -303,11 +299,11 @@ export function loadBookmarks (containerUrl) {
   return (dispatch, getState) => {
     dispatch(loadBookmarksRequest(containerUrl))
     return dispatch(twinql(`
-      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix book  http://www.w3.org/2002/01/bookmark#
-      @prefix dc    http://purl.org/dc/elements/1.1/
-      @prefix ldp   http://www.w3.org/ns/ldp#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix rdf   ${PREFIX_CONTEXT.rdf}
+      @prefix book  ${PREFIX_CONTEXT.book}
+      @prefix dc    ${PREFIX_CONTEXT.dc}
+      @prefix ldp   ${PREFIX_CONTEXT.ldp}
+      @prefix solid ${PREFIX_CONTEXT.solid}
       ${containerUrl} {
         [ ldp:contains ] => ( rdf:type book:Bookmark ) {
           dc:title
