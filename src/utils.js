@@ -91,9 +91,6 @@ export const sparqlPatchQuery = (toDel, toIns) => {
   return toDelQuery + toInsQuery
 }
 
-export const proxyUrl = (proxy, resource, key) =>
-  `${proxy}${encodeURIComponent(resource)}&key=${key}`
-
 export const checkStatus = response => {
   if (response.status >= 200 && response.status < 300) {
     return response
@@ -178,3 +175,6 @@ export function markDataContainer (storageUrl) {
 export function defaultBookmarksUrl (storageUrl) {
   return urljoin(markDataContainer(storageUrl), 'bookmarks', '/')
 }
+
+export const buttonSelected = (event) =>
+  event.type === 'click' || event.key === ' ' || event.key === 'Enter'

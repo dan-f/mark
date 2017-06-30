@@ -10,9 +10,11 @@ const Bookmark = ({ title, url, tags, comments, onClickEdit, handleSelectTag }) 
           <div className='col-6'>
             <h5><a href={url} target='_blank'>{title}</a></h5>
           </div>
-          <div className='col-6' style={{textAlign: 'right'}}>
+          <div role='list' aria-label='Bookmark tags' className='col-6' style={{textAlign: 'right'}}>
             {tags.map(tag =>
-              <Tag key={tag} tag={tag} handleSelect={handleSelectTag} />
+              <div role='listitem' key={tag}>
+                <Tag aria-label={`Add ${tag} to tag filters`} tag={tag} handleSelect={handleSelectTag} />
+              </div>
             )}
           </div>
         </div>
