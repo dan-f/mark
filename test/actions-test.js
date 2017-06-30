@@ -1,7 +1,8 @@
 /* eslint-env mocha */
 import Immutable from 'immutable'
 import nock from 'nock'
-import { mock } from 'sinon'
+import proxyquire from 'proxyquire'
+import { mock, stub } from 'sinon'
 
 import { expect, mockStoreFactory } from './common'
 import * as Actions from '../src/actions'
@@ -25,6 +26,113 @@ describe('Actions', () => {
 
   afterEach(() => {
     nock.cleanAll()
+  })
+
+  describe('login', () => {
+    it('saves credentials after logging in', () => {
+      const session = { webId, lastIdp: 'https://localhost:8443' }
+      const { login } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          login: stub().returns(Promise.resolve({ session }))
+        }
+      })
+      return store.dispatch(login('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }
+          ])
+        })
+    })
+
+    it('fires an app error when there is a problem logging in', () => {
+      const error = new Error('Server timed out')
+      const { login } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          login: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(login('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            {
+              type: AT.MARK_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't log in`,
+              message: error.message
+            }
+          ])
+        })
+    })
+  })
+
+  describe('currentSession', () => {
+    it('saves credentials after finding the current session', () => {
+      const session = { webId, lastIdp: 'https://localhost:8443' }
+      const { currentSession } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          currentSession: stub().returns(Promise.resolve({ session }))
+        }
+      })
+      return store.dispatch(currentSession('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }
+          ])
+        })
+    })
+
+    it('fires an app error when there is a problem finding the current session', () => {
+      const error = new Error('Could not parse localStorage')
+      const { currentSession } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          currentSession: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(currentSession('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            {
+              type: AT.MARK_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't recognize your session.  Try logging out and then logging in.`,
+              message: error.message
+            }
+          ])
+        })
+    })
+  })
+
+  describe('logout', () => {
+    it('clears credentials and the profile after logging out', () => {
+      const { logout } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          logout: stub().returns(Promise.resolve())
+        }
+      })
+      return store.dispatch(logout('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
+            { type: AT.MARK_CLEAR_PROFILE }
+          ])
+        })
+    })
+
+    it('always clears credentials and the profile, even if Auth.logout fails', () => {
+      const error = new Error('Could not parse localStorage')
+      const { logout } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          logout: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(logout('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
+            { type: AT.MARK_CLEAR_PROFILE }
+          ])
+        })
+    })
   })
 
   describe('loadProfile', () => {

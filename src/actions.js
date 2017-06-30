@@ -21,6 +21,10 @@ const PREFIX_CONTEXT = {
 export const login = idp => dispatch =>
   Auth.login(idp)
     .then(credentials => dispatch(saveCredentials(credentials)))
+    .catch(error => {
+      dispatch(setError({ heading: `Couldn't log in`, message: error.message }))
+      throw error
+    })
 
 export const currentSession = () => dispatch =>
   Auth.currentSession()
@@ -29,11 +33,19 @@ export const currentSession = () => dispatch =>
         dispatch(saveCredentials(credentials))
       }
     })
+    .catch(error => {
+      dispatch(setError({
+        heading: `Couldn't recognize your session.  Try logging out and then logging in.`,
+        message: error.message
+      }))
+      throw error
+    })
 
-export const logout = () => dispatch =>
-  Auth.logout()
-    .then(() => dispatch(clearCredentials()))
-    .then(() => dispatch(clearProfile()))
+export const logout = () => dispatch => {
+  dispatch(clearCredentials())
+  dispatch(clearProfile())
+  return Auth.logout()
+}
 
 export const saveCredentials = ({ session }) => ({
   type: ActionTypes.MARK_SAVE_AUTH_CREDENTIALS,
