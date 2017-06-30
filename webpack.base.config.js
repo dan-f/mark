@@ -35,6 +35,11 @@ module.exports = {
         loader: 'babel-loader'
       },
       {
+        /* TODO: remove this once someone addresses https://github.com/anvilresearch/oidc-rp/issues/30 */
+        test: /^.*\/oidc-rp\/.*\.js$/,
+        loader: 'babel-loader'
+      },
+      {
         test: /\.json$/,
         loader: 'json-loader'
       }
