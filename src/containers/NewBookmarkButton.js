@@ -22,7 +22,7 @@ export function NewBookmarkButton ({ actions, match, loggedIn, newBookmark }) {
 function mapStateToProps (state) {
   const newBookmarkEntry = state.bookmarks.find(bookmark => bookmark.get('isNew'))
   return {
-    loggedIn: state.auth.webId && state.auth.key,
+    loggedIn: !!state.auth.session,
     newBookmark: newBookmarkEntry ? newBookmarkEntry.model : null
   }
 }

@@ -63,9 +63,5 @@ if (INSECURE) {
     console.error("Couldn't read the tls key or cert files.  You must pass environment variables TLS_KEY and TLS_CERT to specify paths to the key and cert, respectively, if not using INSECURE mode.\n")
     throw e
   }
-  const options = {
-    key: fs.readFileSync(TLS_KEY),
-    cert: fs.readFileSync(TLS_CERT)
-  }
-  https.createServer(options, app).listen(PORT || 443, HOSTNAME)
+  https.createServer({ key, cert }, app).listen(PORT || 443, HOSTNAME)
 }

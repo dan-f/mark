@@ -15,6 +15,7 @@ module.exports = {
       'redux',
       'redux-logger',
       'redux-thunk',
+      'solid-auth-client',
       'url-join',
       'uuid',
       'isomorphic-fetch',
@@ -34,13 +35,23 @@ module.exports = {
         loader: 'babel-loader'
       },
       {
+        /* TODO: remove this once someone addresses https://github.com/anvilresearch/oidc-rp/issues/30 */
+        test: /^.*\/oidc-rp\/.*\.js$/,
+        loader: 'babel-loader'
+      },
+      {
         test: /\.json$/,
         loader: 'json-loader'
       }
     ]
   },
+  externals: {
+    'text-encoding': 'TextEncoder',
+    'urlutils': 'URL',
+    '@trust/webcrypto': 'crypto'
+  },
   plugins: [
     new webpack.DefinePlugin({ 'global.IS_BROWSER': true }),
-    new webpack.optimize.CommonsChunkPlugin({name: 'vendor', filename: 'vendor.bundle.js'})
+    new webpack.optimize.CommonsChunkPlugin({ name: 'vendor' })
   ]
 }

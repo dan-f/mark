@@ -1,7 +1,8 @@
 /* eslint-env mocha */
 import Immutable from 'immutable'
 import nock from 'nock'
-import { mock } from 'sinon'
+import proxyquire from 'proxyquire'
+import { mock, stub } from 'sinon'
 
 import { expect, mockStoreFactory } from './common'
 import * as Actions from '../src/actions'
@@ -9,22 +10,11 @@ import * as AT from '../src/actionTypes'
 
 describe('Actions', () => {
   const webId = 'https://localhost:8443/profile/card#me'
-  const key = 'abc123'
   let store
-
-  const noxy = base => {
-    const scope = nock(base)
-    const scopeProto = Object.getPrototypeOf(scope)
-    scopeProto.proxy = function (method, path, ...args) {
-      return this.intercept('/,proxy', method, ...args)
-        .query({ uri: `${this.basePath}${path}`, key })
-    }
-    return scope
-  }
 
   beforeEach(() => {
     store = mockStoreFactory({
-      auth: { webId, key },
+      auth: { session: { webId } },
       endpoints: {
         login: 'https://localhost:8443/,login',
         logout: 'https://localhost:8443/,logout',
@@ -36,6 +26,113 @@ describe('Actions', () => {
 
   afterEach(() => {
     nock.cleanAll()
+  })
+
+  describe('login', () => {
+    it('saves credentials after logging in', () => {
+      const session = { webId, lastIdp: 'https://localhost:8443' }
+      const { login } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          login: stub().returns(Promise.resolve({ session }))
+        }
+      })
+      return store.dispatch(login('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }
+          ])
+        })
+    })
+
+    it('fires an app error when there is a problem logging in', () => {
+      const error = new Error('Server timed out')
+      const { login } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          login: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(login('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            {
+              type: AT.MARK_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't log in`,
+              message: error.message
+            }
+          ])
+        })
+    })
+  })
+
+  describe('currentSession', () => {
+    it('saves credentials after finding the current session', () => {
+      const session = { webId, lastIdp: 'https://localhost:8443' }
+      const { currentSession } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          currentSession: stub().returns(Promise.resolve({ session }))
+        }
+      })
+      return store.dispatch(currentSession('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }
+          ])
+        })
+    })
+
+    it('fires an app error when there is a problem finding the current session', () => {
+      const error = new Error('Could not parse localStorage')
+      const { currentSession } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          currentSession: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(currentSession('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            {
+              type: AT.MARK_ALERT_SET,
+              kind: 'danger',
+              heading: `Couldn't recognize your session.  Try logging out and then logging in.`,
+              message: error.message
+            }
+          ])
+        })
+    })
+  })
+
+  describe('logout', () => {
+    it('clears credentials and the profile after logging out', () => {
+      const { logout } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          logout: stub().returns(Promise.resolve())
+        }
+      })
+      return store.dispatch(logout('https://localhost:8443'))
+        .then(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
+            { type: AT.MARK_CLEAR_PROFILE }
+          ])
+        })
+    })
+
+    it('always clears credentials and the profile, even if Auth.logout fails', () => {
+      const error = new Error('Could not parse localStorage')
+      const { logout } = proxyquire('../src/actions', {
+        'solid-auth-client': {
+          logout: stub().returns(Promise.reject(error))
+        }
+      })
+      return store.dispatch(logout('https://localhost:8443'))
+        .catch(() => {
+          expect(store.getActions()).to.eql([
+            { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
+            { type: AT.MARK_CLEAR_PROFILE }
+          ])
+        })
+    })
   })
 
   describe('loadProfile', () => {
@@ -53,9 +150,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadProfile())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            { type: AT.MARK_LOAD_PROFILE_REQUEST },
             {
-              type: AT.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+              type: AT.MARK_LOAD_PROFILE_SUCCESS,
               profile: { 'foaf:img': 'https://localhost:8443/me.jpg' }
             }
           ])
@@ -76,9 +173,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadProfile())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_PROFILE_REQUEST },
+            { type: AT.MARK_LOAD_PROFILE_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't load your profile`,
               message: 'Internal Server Error'
@@ -90,13 +187,13 @@ describe('Actions', () => {
 
   describe('maybeInstallAppResources', () => {
     it('registers bookmarks in the type index and sets the bookmarks url', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         // Query to test whether the bookmarks container already exists
         .post('/,twinql')
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -117,42 +214,42 @@ describe('Actions', () => {
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
         // HEAD to test whether the bookmarks container already exists
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
         // POST to create the bookmarks container
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(200)
         // query to find the public type index
         .post('/,twinql')
         .reply(200, {
           '@context': {
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#'
+            'solid': 'http://www.w3.org/ns/solid/terms#'
           },
           '@id': 'https://dan-f.databox.me/profile/card#me',
           'solid:publicTypeIndex': { '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl' }
         })
         // PATCH to update the public type index with the bookmarks type registration
-        .proxy('PATCH', '/Preferences/publicTypeIndex.ttl')
+        .patch('/Preferences/publicTypeIndex.ttl')
         .reply(200)
 
       return store.dispatch(Actions.maybeInstallAppResources())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
-            { type: AT.BOOKMARKS_REGISTER_REQUEST },
-            { type: AT.BOOKMARKS_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' },
+            { type: AT.MARK_REGISTER_REQUEST },
+            { type: AT.MARK_REGISTER_SUCCESS, bookmarksUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
 
     it('fires an app error if the bookmarks resource cannot be created', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -169,17 +266,17 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(500)
 
       return store.dispatch(Actions.maybeInstallAppResources())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -196,7 +293,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -222,7 +319,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@id': webId,
@@ -245,7 +342,7 @@ describe('Actions', () => {
         .reply(200, {
           '@context': {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-            'solid': 'http://solid.github.io/vocab/solid-terms.ttl#',
+            'solid': 'http://www.w3.org/ns/solid/terms#',
             'book': 'http://www.w3.org/2002/01/bookmark#'
           },
           '@error': {
@@ -258,7 +355,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't find your Mark installation`,
               message: 'Internal Server Error'
@@ -270,7 +367,7 @@ describe('Actions', () => {
 
   describe('createBookmarksContainer', () => {
     it('creates the bookmarks solid resource if it has not yet been created', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -279,22 +376,22 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
 
     it('finds the bookmarks solid resource if it already exists', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -303,20 +400,20 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_SUCCESS, bookmarksContainerUrl: 'https://localhost:8443/Applications/mark/bookmarks/' }
           ])
         })
     })
 
     it('fires an app error if it cannot find the storage location', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -331,9 +428,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.createBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -343,7 +440,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if the creation fails', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -352,17 +449,17 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(500)
 
       return store.dispatch(Actions.createBookmarksContainer())
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_CREATE_CONTAINER_REQUEST },
+            { type: AT.MARK_CREATE_CONTAINER_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't install your bookmarks container`,
               message: 'Internal Server Error'
@@ -380,8 +477,8 @@ describe('Actions', () => {
         `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
         `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(200)
 
       const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
@@ -390,8 +487,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_SUCCESS, bookmark: newBookmark }
           ])
         })
     })
@@ -402,8 +499,8 @@ describe('Actions', () => {
       const expectedPatchQuery =
         `INSERT DATA { <${id}> <${dc}title> "title" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(200)
 
       const bookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'title' })
@@ -411,8 +508,8 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(null, bookmark, true))
         .then(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_SUCCESS, bookmark }
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_SUCCESS, bookmark }
           ])
         })
     })
@@ -424,8 +521,8 @@ describe('Actions', () => {
         `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
         `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(500)
 
       const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
@@ -434,9 +531,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.saveBookmark(oldBookmark, newBookmark))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_SAVE_BOOKMARK_REQUEST },
+            { type: AT.MARK_SAVE_BOOKMARK_REQUEST },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't save your bookmark`,
               message: 'Internal Server Error'
@@ -487,8 +584,8 @@ describe('Actions', () => {
         .then(() => {
           const actions = store.getActions()
           expect(actions.length).to.equal(2)
-          expect(actions[0]).to.eql({ type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl })
-          expect(actions[1].type).to.eql(AT.BOOKMARKS_LOAD_SUCCESS)
+          expect(actions[0]).to.eql({ type: AT.MARK_LOAD_REQUEST, url: containerUrl })
+          expect(actions[1].type).to.eql(AT.MARK_LOAD_SUCCESS)
           expect(actions[1].bookmarks).to.eql(expectedBookmarks)
         })
     })
@@ -503,9 +600,9 @@ describe('Actions', () => {
       return store.dispatch(Actions.loadBookmarks(containerUrl))
         .catch(() => {
           expect(store.getActions()).to.eql([
-            { type: AT.BOOKMARKS_LOAD_REQUEST, url: containerUrl },
+            { type: AT.MARK_LOAD_REQUEST, url: containerUrl },
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't load your bookmarks`,
               message: 'Internal Server Error'
@@ -521,7 +618,7 @@ describe('Actions', () => {
       store.dispatch(Actions.createNew())
       const actions = store.getActions()
       expect(actions.length).to.equal(1)
-      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
+      expect(actions[0].type).to.equal(AT.MARK_CREATE_NEW_BOOKMARK)
       expect(actions[0].bookmark.getIn(['rdf:type', '@id'])).to.equal('book:Bookmark')
     })
   })
@@ -531,8 +628,8 @@ describe('Actions', () => {
       store = mockStoreFactory({ bookmarksUrl: 'https://localhost:8443/bookmarks/' })
       store.dispatch(Actions.createAndEditNew())
       const actions = store.getActions()
-      expect(actions[0].type).to.equal(AT.BOOKMARKS_CREATE_NEW_BOOKMARK)
-      expect(actions[1].type).to.equal(AT.BOOKMARKS_EDIT_BOOKMARK)
+      expect(actions[0].type).to.equal(AT.MARK_CREATE_NEW_BOOKMARK)
+      expect(actions[1].type).to.equal(AT.MARK_EDIT_BOOKMARK)
     })
   })
 
@@ -540,7 +637,7 @@ describe('Actions', () => {
     it('tells the app to remove the current error', () => {
       store.dispatch(Actions.clearError())
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_ALERT_CLEAR, kind: 'danger' }
+        { type: AT.MARK_ALERT_CLEAR, kind: 'danger' }
       ])
     })
   })
@@ -549,7 +646,7 @@ describe('Actions', () => {
     it('tells the app to quit editing a bookmark', () => {
       store.dispatch(Actions.cancelEdit({}))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_EDIT_BOOKMARK_CANCEL, bookmark: {} }
+        { type: AT.MARK_EDIT_BOOKMARK_CANCEL, bookmark: {} }
       ])
     })
   })
@@ -558,7 +655,7 @@ describe('Actions', () => {
     it('tells the app to add a filter tag', () => {
       store.dispatch(Actions.addFilterTag('foo'))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_ADD_TAG, tag: 'foo' }
+        { type: AT.MARK_FILTER_ADD_TAG, tag: 'foo' }
       ])
     })
   })
@@ -567,7 +664,7 @@ describe('Actions', () => {
     it('tells the app to remove a filter tag', () => {
       store.dispatch(Actions.removeFilterTag('foo'))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_REMOVE_TAG, tag: 'foo' }
+        { type: AT.MARK_FILTER_REMOVE_TAG, tag: 'foo' }
       ])
     })
   })
@@ -577,8 +674,8 @@ describe('Actions', () => {
       store.dispatch(Actions.showArchived(true))
       store.dispatch(Actions.showArchived(false))
       expect(store.getActions()).to.eql([
-        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: true },
-        { type: AT.BOOKMARKS_FILTER_TOGGLE_ARCHIVED, shown: false }
+        { type: AT.MARK_FILTER_TOGGLE_ARCHIVED, shown: true },
+        { type: AT.MARK_FILTER_TOGGLE_ARCHIVED, shown: false }
       ])
     })
   })
@@ -609,10 +706,10 @@ describe('Actions', () => {
         .options('/')
         .reply(200, '', {
           link: [
-            `<${login}>; rel="http://solid.github.io/vocab/solid-terms.ttl#loginEndpoint"`,
-            `<${logout}>; rel="http://solid.github.io/vocab/solid-terms.ttl#logoutEndpoint"`,
-            `<${twinql}>; rel="http://solid.github.io/vocab/solid-terms.ttl#twinqlEndpoint"`,
-            `<${proxy}>; rel="http://solid.github.io/vocab/solid-terms.ttl#proxyEndpoint"`
+            `<${login}>; rel="http://www.w3.org/ns/solid/terms#loginEndpoint"`,
+            `<${logout}>; rel="http://www.w3.org/ns/solid/terms#logoutEndpoint"`,
+            `<${twinql}>; rel="http://www.w3.org/ns/solid/terms#twinqlEndpoint"`,
+            `<${proxy}>; rel="http://www.w3.org/ns/solid/terms#proxyEndpoint"`
           ].join(',')
         })
 
@@ -620,7 +717,7 @@ describe('Actions', () => {
         .then(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_SAVE_ENDPOINTS,
+              type: AT.MARK_SAVE_ENDPOINTS,
               endpoints: { login, logout, twinql, proxy }
             }
           ])
@@ -636,7 +733,7 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             {
-              type: AT.BOOKMARKS_ALERT_SET,
+              type: AT.MARK_ALERT_SET,
               kind: 'danger',
               heading: `Couldn't find data needed to log in`,
               message: 'Internal Server Error'
@@ -653,21 +750,13 @@ describe('Actions', () => {
       'save' a webId for the returning user.
     */
     it('creates an auth success action with the given webId', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
-      const key = 'qwertyuiop'
-      store.dispatch(Actions.saveCredentials({ webId, key }))
+      const session = {
+        webId: 'https://localhost:8443/profile/card#me',
+        idp: 'https://localhost:8443'
+      }
+      store.dispatch(Actions.saveCredentials({ session }))
       expect(store.getActions()).to.eql(
-        [{ type: AT.BOOKMARKS_SAVE_AUTH_CREDENTIALS, webId, key }]
-      )
-    })
-  })
-
-  describe('saveLastIdp', () => {
-    it('saves the last IDP', () => {
-      const lastIdp = 'https://example.com/'
-      store.dispatch(Actions.saveLastIdp(lastIdp))
-      expect(store.getActions()).to.eql(
-        [{ type: AT.BOOKMARKS_SAVE_LAST_IDP, lastIdp }]
+        [{ type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }]
       )
     })
   })

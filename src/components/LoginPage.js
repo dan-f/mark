@@ -2,7 +2,7 @@ import React from 'react'
 
 import SignupButton from './SignupButton'
 
-export default function LoginPage ({ loginUiOpen, loginServer, onChangeLoginServer, onClickLogin, onClickCancel, onSubmitLogin, redirectToIdpLogin }) {
+export default function LoginPage ({ loginUiOpen, loginServer, onChangeLoginServer, onClickLogin, onClickCancel, onSubmitLogin, loginAndShowBookmarks }) {
   return (
     <div>
       <p>
@@ -27,7 +27,7 @@ export default function LoginPage ({ loginUiOpen, loginServer, onChangeLoginServ
         : (
           <div>
             <button type='button' className='btn btn-outline-primary' onClick={onClickLogin}>Log In</button>
-            <SignupButton onSignupSuccess={redirectToIdpLogin} />
+            <SignupButton onSignupSuccess={loginAndShowBookmarks} />
           </div>
         )
       }

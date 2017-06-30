@@ -1,8 +1,7 @@
-/* global fetch */
 import * as Immutable from 'immutable'
+import * as Auth from 'solid-auth-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
-import 'isomorphic-fetch'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
@@ -14,39 +13,57 @@ const PREFIX_CONTEXT = {
   foaf: 'http://xmlns.com/foaf/0.1/',
   ldp: 'http://www.w3.org/ns/ldp#',
   pim: 'http://www.w3.org/ns/pim/space#',
-  solid: 'http://solid.github.io/vocab/solid-terms.ttl#'
+  solid: 'http://www.w3.org/ns/solid/terms#'
 }
 
 // Authentication
 
-export const saveCredentials = ({ webId, key }) => ({
-  type: ActionTypes.BOOKMARKS_SAVE_AUTH_CREDENTIALS,
-  webId,
-  key
-})
+export const login = idp => dispatch =>
+  Auth.login(idp)
+    .then(credentials => dispatch(saveCredentials(credentials)))
+    .catch(error => {
+      dispatch(setError({ heading: `Couldn't log in`, message: error.message }))
+      throw error
+    })
 
-export const clearCredentials = () => ({
-  type: ActionTypes.BOOKMARKS_CLEAR_AUTH_CREDENTIALS
-})
-
-export const saveLastIdp = lastIdp => ({
-  type: ActionTypes.BOOKMARKS_SAVE_LAST_IDP,
-  lastIdp
-})
+export const currentSession = () => dispatch =>
+  Auth.currentSession()
+    .then(credentials => {
+      if (credentials.session) {
+        dispatch(saveCredentials(credentials))
+      }
+    })
+    .catch(error => {
+      dispatch(setError({
+        heading: `Couldn't recognize your session.  Try logging out and then logging in.`,
+        message: error.message
+      }))
+      throw error
+    })
 
 export const logout = () => dispatch => {
   dispatch(clearCredentials())
   dispatch(clearProfile())
+  return Auth.logout()
 }
+
+export const saveCredentials = ({ session }) => ({
+  type: ActionTypes.MARK_SAVE_AUTH_CREDENTIALS,
+  session
+})
+
+export const clearCredentials = () => ({
+  type: ActionTypes.MARK_CLEAR_AUTH_CREDENTIALS
+})
 
 // Profile
 
 export const loadProfile = () => (dispatch, getState) => {
-  const { auth: { webId } } = getState()
+  const { auth } = getState()
   dispatch(loadProfileRequest())
   return dispatch(twinql(`
     @prefix foaf http://xmlns.com/foaf/0.1/
-    ${webId} {
+    ${auth.session.webId} {
       foaf:img
     }
   `)).then(response => {
@@ -65,15 +82,15 @@ export const loadProfile = () => (dispatch, getState) => {
 }
 
 export const clearProfile = () => ({
-  type: ActionTypes.BOOKMARKS_CLEAR_PROFILE
+  type: ActionTypes.MARK_CLEAR_PROFILE
 })
 
 export const loadProfileRequest = () => ({
-  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_REQUEST
+  type: ActionTypes.MARK_LOAD_PROFILE_REQUEST
 })
 
 export const loadProfileSuccess = profile => ({
-  type: ActionTypes.BOOKMARKS_LOAD_PROFILE_SUCCESS,
+  type: ActionTypes.MARK_LOAD_PROFILE_SUCCESS,
   profile
 })
 
@@ -81,10 +98,10 @@ export const loadProfileSuccess = profile => ({
 
 export function twinql (query) {
   return (dispatch, getState) => {
-    const { endpoints: { twinql }, auth: { key } } = getState()
-    return fetch(twinql, {
+    const { endpoints } = getState()
+    return Auth.fetch(endpoints.twinql, {
       method: 'POST',
-      headers: { 'content-type': 'text/plain', 'Authorization': `Bearer ${key}` },
+      headers: { 'content-type': 'text/plain' },
       body: query
     }).then(response => response.json())
   }
@@ -94,13 +111,11 @@ export function twinql (query) {
 
 export function findEndpoints (url) {
   return dispatch => {
-    const solidTerms = term =>
-      `http://solid.github.io/vocab/solid-terms.ttl#${term}`
-    return fetch(url, { method: 'OPTIONS' })
+    return Auth.fetch(url, { method: 'OPTIONS' })
       .then(utils.checkStatus)
       .then(response => {
         const linkHeaders = utils.parseLinkHeader(response.headers.get('link'))
-        const getTerm = term => linkHeaders[solidTerms(term + 'Endpoint')][0]
+        const getTerm = term => linkHeaders[PREFIX_CONTEXT.solid + term + 'Endpoint'][0]
         return dispatch(saveEndpoints({
           login: getTerm('login'),
           logout: getTerm('logout'),
@@ -118,14 +133,14 @@ export function findEndpoints (url) {
 
 export function saveEndpoints (endpoints) {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_ENDPOINTS,
+    type: ActionTypes.MARK_SAVE_ENDPOINTS,
     endpoints
   }
 }
 
 export function clearEndpoints (endpoints) {
   return {
-    type: ActionTypes.BOOKMARKS_CLEAR_ENDPOINTS
+    type: ActionTypes.MARK_CLEAR_ENDPOINTS
   }
 }
 
@@ -142,12 +157,12 @@ export function maybeInstallAppResources () {
 
 export function getBookmarksContainer () {
   return (dispatch, getState) => {
-    const { auth: { webId } } = getState()
+    const { auth } = getState()
     return dispatch(twinql(`
       @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix solid ${PREFIX_CONTEXT.solid}
       @prefix book  http://www.w3.org/2002/01/bookmark#
-      ${webId} {
+      ${auth.session.webId} {
         solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
           solid:instanceContainer
         }
@@ -171,11 +186,11 @@ export function getBookmarksContainer () {
 
 export function createBookmarksContainer () {
   return (dispatch, getState) => {
-    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    const { auth } = getState()
     dispatch(createBookmarksContainerRequest())
     return dispatch(twinql(`
       @prefix pim http://www.w3.org/ns/pim/space#
-      ${webId} { pim:storage }
+      ${auth.session.webId} { pim:storage }
     `)).then(response => {
       const error = response['@error']
       const storage = response['pim:storage']
@@ -188,12 +203,11 @@ export function createBookmarksContainer () {
       return storage
     }).then(storage => {
       const bookmarksContainer = utils.defaultBookmarksUrl(storage['@id'])
-      const proxiedContainerUrl = utils.proxyUrl(proxy, urljoin(bookmarksContainer, '.config'), key)
-      return fetch(proxiedContainerUrl, { method: 'HEAD' })
+      return Auth.fetch(bookmarksContainer, { method: 'HEAD' })
         .then(response =>
           response.status >= 200 && response.status < 300
             ? response
-            : fetch(proxiedContainerUrl, { method: 'PUT' }).then(utils.checkStatus)
+            : Auth.fetch(bookmarksContainer, { method: 'PUT' }).then(utils.checkStatus)
         )
         .then(() => bookmarksContainer)
     }).then(bookmarksContainer => {
@@ -210,35 +224,33 @@ export function createBookmarksContainer () {
 
 export function createBookmarksContainerRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_REQUEST
+    type: ActionTypes.MARK_CREATE_CONTAINER_REQUEST
   }
 }
 
 export function createBookmarksContainerSuccess (bookmarksContainerUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_CONTAINER_SUCCESS,
+    type: ActionTypes.MARK_CREATE_CONTAINER_SUCCESS,
     bookmarksContainerUrl
   }
 }
 
 export function registerBookmarksContainer (bookmarksContainer) {
   return (dispatch, getState) => {
-    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    const { auth } = getState()
     return dispatch(twinql(`
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
-      ${webId} { solid:publicTypeIndex }
+      @prefix solid ${PREFIX_CONTEXT.solid}
+      ${auth.session.webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
-      const book = 'http://www.w3.org/2002/01/bookmark#'
-      const solid = 'http://www.w3.org/ns/solid/terms#'
       const registrationId = uuid.v4()
       const registrationTriples = [
-        `<#${registrationId}> a <${solid}TypeRegistration> .`,
-        `<#${registrationId}> <${solid}forClass> <${book}Bookmark> .`,
-        `<#${registrationId}> <${solid}instanceContainer> <${bookmarksContainer}> .`
+        `<#${registrationId}> a <${PREFIX_CONTEXT.solid}TypeRegistration> .`,
+        `<#${registrationId}> <${PREFIX_CONTEXT.solid}forClass> <${PREFIX_CONTEXT.book}Bookmark> .`,
+        `<#${registrationId}> <${PREFIX_CONTEXT.solid}instanceContainer> <${bookmarksContainer}> .`
       ]
       dispatch(registerBookmarksRequest())
-      return utils.sparqlPatch(utils.proxyUrl(proxy, publicTypeIndex, key), [], registrationTriples)
+      return utils.sparqlPatch(publicTypeIndex, [], registrationTriples)
     }).then(() => {
       dispatch(registerBookmarksSuccess(bookmarksContainer))
       return bookmarksContainer
@@ -253,13 +265,13 @@ export function registerBookmarksContainer (bookmarksContainer) {
 
 export function registerBookmarksRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_REGISTER_REQUEST
+    type: ActionTypes.MARK_REGISTER_REQUEST
   }
 }
 
 export function registerBookmarksSuccess (bookmarksUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_REGISTER_SUCCESS,
+    type: ActionTypes.MARK_REGISTER_SUCCESS,
     bookmarksUrl
   }
 }
@@ -268,13 +280,12 @@ export function registerBookmarksSuccess (bookmarksUrl) {
 
 export function saveBookmark (original, updated, isNew) {
   return (dispatch, getState) => {
-    const { auth: { key }, endpoints: { proxy } } = getState()
     const grpahOf = node => node.split('#')[0]
     const [ url, toDel, toIns ] = isNew
       ? [ grpahOf(updated.get('@id')), [], utils.jsonLdToNT(updated, PREFIX_CONTEXT) ]
       : [ grpahOf(original.get('@id')), ...utils.diff(original, updated, PREFIX_CONTEXT) ]
     dispatch(saveBookmarkRequest())
-    return utils.sparqlPatch(utils.proxyUrl(proxy, url, key), isNew ? [] : toDel, toIns)
+    return utils.sparqlPatch(url, isNew ? [] : toDel, toIns)
       .then(() => dispatch(saveBookmarkSuccess(updated)))
       .catch(error => {
         const { message } = error
@@ -286,13 +297,13 @@ export function saveBookmark (original, updated, isNew) {
 
 export function saveBookmarkRequest () {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_REQUEST
+    type: ActionTypes.MARK_SAVE_BOOKMARK_REQUEST
   }
 }
 
 export function saveBookmarkSuccess (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_SAVE_BOOKMARK_SUCCESS,
+    type: ActionTypes.MARK_SAVE_BOOKMARK_SUCCESS,
     bookmark
   }
 }
@@ -303,11 +314,11 @@ export function loadBookmarks (containerUrl) {
   return (dispatch, getState) => {
     dispatch(loadBookmarksRequest(containerUrl))
     return dispatch(twinql(`
-      @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
-      @prefix book  http://www.w3.org/2002/01/bookmark#
-      @prefix dc    http://purl.org/dc/elements/1.1/
-      @prefix ldp   http://www.w3.org/ns/ldp#
-      @prefix solid http://solid.github.io/vocab/solid-terms.ttl#
+      @prefix rdf   ${PREFIX_CONTEXT.rdf}
+      @prefix book  ${PREFIX_CONTEXT.book}
+      @prefix dc    ${PREFIX_CONTEXT.dc}
+      @prefix ldp   ${PREFIX_CONTEXT.ldp}
+      @prefix solid ${PREFIX_CONTEXT.solid}
       ${containerUrl} {
         [ ldp:contains ] => ( rdf:type book:Bookmark ) {
           dc:title
@@ -339,14 +350,14 @@ export function loadBookmarks (containerUrl) {
 
 export function loadBookmarksRequest (url) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_REQUEST,
+    type: ActionTypes.MARK_LOAD_REQUEST,
     url
   }
 }
 
 export function loadBookmarksSuccess (bookmarks) {
   return {
-    type: ActionTypes.BOOKMARKS_LOAD_SUCCESS,
+    type: ActionTypes.MARK_LOAD_SUCCESS,
     bookmarks
   }
 }
@@ -355,7 +366,7 @@ export function loadBookmarksSuccess (bookmarks) {
 
 const _setAlert = kind => message => {
   const action = {
-    type: ActionTypes.BOOKMARKS_ALERT_SET,
+    type: ActionTypes.MARK_ALERT_SET,
     kind
   }
   return typeof message === 'object'
@@ -364,7 +375,7 @@ const _setAlert = kind => message => {
 }
 
 const _clearAlert = kind => () => ({
-  type: ActionTypes.BOOKMARKS_ALERT_CLEAR,
+  type: ActionTypes.MARK_ALERT_CLEAR,
   kind
 })
 
@@ -380,14 +391,14 @@ export const clearInfo = _clearAlert('info')
 
 export function edit (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK,
+    type: ActionTypes.MARK_EDIT_BOOKMARK,
     bookmark
   }
 }
 
 export function cancelEdit (bookmark) {
   return {
-    type: ActionTypes.BOOKMARKS_EDIT_BOOKMARK_CANCEL,
+    type: ActionTypes.MARK_EDIT_BOOKMARK_CANCEL,
     bookmark
   }
 }
@@ -408,7 +419,7 @@ export function createAndEditNew (bookmarksContainer) {
 
 function newBookmark (bookmarkUrl) {
   return {
-    type: ActionTypes.BOOKMARKS_CREATE_NEW_BOOKMARK,
+    type: ActionTypes.MARK_CREATE_NEW_BOOKMARK,
     bookmark: Immutable.fromJS({
       '@id': `${bookmarkUrl}#bookmark`,
       'rdf:type': { '@id': 'book:Bookmark' },
@@ -428,21 +439,21 @@ function newBookmark (bookmarkUrl) {
 
 export function addFilterTag (tag) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_ADD_TAG,
+    type: ActionTypes.MARK_FILTER_ADD_TAG,
     tag
   }
 }
 
 export function removeFilterTag (tag) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_REMOVE_TAG,
+    type: ActionTypes.MARK_FILTER_REMOVE_TAG,
     tag
   }
 }
 
 export function showArchived (shown) {
   return {
-    type: ActionTypes.BOOKMARKS_FILTER_TOGGLE_ARCHIVED,
+    type: ActionTypes.MARK_FILTER_TOGGLE_ARCHIVED,
     shown
   }
 }
