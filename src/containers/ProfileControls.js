@@ -25,7 +25,8 @@ class ProfileControls extends Component {
   logout () {
     const { history } = this.props
     this.props.actions.logout()
-    history.push('/')
+      .then(() => history.push('/'))
+      .then(() => { this.setState({ open: false }) })
   }
 
   render () {
@@ -51,7 +52,7 @@ class ProfileControls extends Component {
   }
 }
 const mapStateToProps = state => ({
-  webId: state.auth.webId,
+  webId: state.auth.session ? state.auth.session.webId : '',
   img: state.profile['foaf:img']
 })
 

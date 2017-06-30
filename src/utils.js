@@ -1,7 +1,6 @@
-/* global fetch */
 import Immutable from 'immutable'
 import urljoin from 'url-join'
-import 'isomorphic-fetch'
+import * as Auth from 'solid-auth-client'
 
 export const jsonLdToNT = (json, context) =>
   json.reduce((statements, object, predicate) =>
@@ -72,10 +71,10 @@ export const diff = (original, updated, context) => {
     .toJS()
 }
 
-export const sparqlPatch = (url, toDel, toIns, headers) =>
-  fetch(url, {
+export const sparqlPatch = (url, toDel, toIns) =>
+  Auth.fetch(url, {
     method: 'PATCH',
-    headers: { ...{ 'content-type': 'application/sparql-update' }, ...headers },
+    headers: { 'content-type': 'application/sparql-update' },
     body: sparqlPatchQuery(toDel, toIns)
   }).then(checkStatus)
 

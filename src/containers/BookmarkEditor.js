@@ -118,16 +118,10 @@ export class BookmarkEditor extends React.Component {
   }
 }
 
-function mapStateToProps (state) {
-  return {
-    webId: state.auth.webId
-  }
-}
-
 function mapDispatchToProps (dispatch) {
   return {
     actions: bindActionCreators(Actions, dispatch)
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(BookmarkEditor)
+export default connect(null, mapDispatchToProps)(BookmarkEditor)

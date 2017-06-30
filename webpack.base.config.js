@@ -15,6 +15,7 @@ module.exports = {
       'redux',
       'redux-logger',
       'redux-thunk',
+      'solid-auth-client',
       'url-join',
       'uuid',
       'isomorphic-fetch',
@@ -39,8 +40,13 @@ module.exports = {
       }
     ]
   },
+  externals: {
+    'text-encoding': 'TextEncoder',
+    'urlutils': 'URL',
+    '@trust/webcrypto': 'crypto'
+  },
   plugins: [
     new webpack.DefinePlugin({ 'global.IS_BROWSER': true }),
-    new webpack.optimize.CommonsChunkPlugin({name: 'vendor', filename: 'vendor.bundle.js'})
+    new webpack.optimize.CommonsChunkPlugin({ name: 'vendor' })
   ]
 }

@@ -9,22 +9,11 @@ import * as AT from '../src/actionTypes'
 
 describe('Actions', () => {
   const webId = 'https://localhost:8443/profile/card#me'
-  const key = 'abc123'
   let store
-
-  const noxy = base => {
-    const scope = nock(base)
-    const scopeProto = Object.getPrototypeOf(scope)
-    scopeProto.proxy = function (method, path, ...args) {
-      return this.intercept('/,proxy', method, ...args)
-        .query({ uri: `${this.basePath}${path}`, key })
-    }
-    return scope
-  }
 
   beforeEach(() => {
     store = mockStoreFactory({
-      auth: { webId, key },
+      auth: { session: { webId } },
       endpoints: {
         login: 'https://localhost:8443/,login',
         logout: 'https://localhost:8443/,logout',
@@ -90,7 +79,7 @@ describe('Actions', () => {
 
   describe('maybeInstallAppResources', () => {
     it('registers bookmarks in the type index and sets the bookmarks url', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         // Query to test whether the bookmarks container already exists
         .post('/,twinql')
         .reply(200, {
@@ -117,10 +106,10 @@ describe('Actions', () => {
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
         // HEAD to test whether the bookmarks container already exists
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
         // POST to create the bookmarks container
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(200)
         // query to find the public type index
         .post('/,twinql')
@@ -132,7 +121,7 @@ describe('Actions', () => {
           'solid:publicTypeIndex': { '@id': 'https://localhost:8443/Preferences/publicTypeIndex.ttl' }
         })
         // PATCH to update the public type index with the bookmarks type registration
-        .proxy('PATCH', '/Preferences/publicTypeIndex.ttl')
+        .patch('/Preferences/publicTypeIndex.ttl')
         .reply(200)
 
       return store.dispatch(Actions.maybeInstallAppResources())
@@ -147,7 +136,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if the bookmarks resource cannot be created', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -169,9 +158,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(500)
 
       return store.dispatch(Actions.maybeInstallAppResources())
@@ -270,7 +259,7 @@ describe('Actions', () => {
 
   describe('createBookmarksContainer', () => {
     it('creates the bookmarks solid resource if it has not yet been created', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -279,9 +268,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
@@ -294,7 +283,7 @@ describe('Actions', () => {
     })
 
     it('finds the bookmarks solid resource if it already exists', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -303,7 +292,7 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(200)
 
       return store.dispatch(Actions.createBookmarksContainer())
@@ -316,7 +305,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if it cannot find the storage location', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -343,7 +332,7 @@ describe('Actions', () => {
     })
 
     it('fires an app error if the creation fails', () => {
-      noxy('https://localhost:8443/')
+      nock('https://localhost:8443/')
         .post('/,twinql')
         .reply(200, {
           '@context': {
@@ -352,9 +341,9 @@ describe('Actions', () => {
           '@id': webId,
           'pim:storage': { '@id': 'https://localhost:8443/' }
         })
-        .proxy('HEAD', '/Applications/mark/bookmarks/.config')
+        .head('/Applications/mark/bookmarks/')
         .reply(404)
-        .proxy('PUT', '/Applications/mark/bookmarks/.config')
+        .put('/Applications/mark/bookmarks/')
         .reply(500)
 
       return store.dispatch(Actions.createBookmarksContainer())
@@ -380,8 +369,8 @@ describe('Actions', () => {
         `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
         `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(200)
 
       const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
@@ -402,8 +391,8 @@ describe('Actions', () => {
       const expectedPatchQuery =
         `INSERT DATA { <${id}> <${dc}title> "title" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(200)
 
       const bookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'title' })
@@ -424,8 +413,8 @@ describe('Actions', () => {
         `DELETE DATA { <${id}> <${dc}title> "old" . };\n` +
         `INSERT DATA { <${id}> <${dc}title> "new" . };\n`
 
-      noxy('https://localhost:8443/')
-        .proxy('PATCH', '/bookmark', expectedPatchQuery)
+      nock('https://localhost:8443/')
+        .patch('/bookmark', expectedPatchQuery)
         .reply(500)
 
       const oldBookmark = Immutable.fromJS({ '@id': `${id}`, 'dc:title': 'old' })
@@ -653,21 +642,13 @@ describe('Actions', () => {
       'save' a webId for the returning user.
     */
     it('creates an auth success action with the given webId', () => {
-      const webId = 'https://localhost:8443/profile/card#me'
-      const key = 'qwertyuiop'
-      store.dispatch(Actions.saveCredentials({ webId, key }))
+      const session = {
+        webId: 'https://localhost:8443/profile/card#me',
+        idp: 'https://localhost:8443'
+      }
+      store.dispatch(Actions.saveCredentials({ session }))
       expect(store.getActions()).to.eql(
-        [{ type: AT.MARK_SAVE_AUTH_CREDENTIALS, webId, key }]
-      )
-    })
-  })
-
-  describe('saveLastIdp', () => {
-    it('saves the last IDP', () => {
-      const lastIdp = 'https://example.com/'
-      store.dispatch(Actions.saveLastIdp(lastIdp))
-      expect(store.getActions()).to.eql(
-        [{ type: AT.MARK_SAVE_LAST_IDP, lastIdp }]
+        [{ type: AT.MARK_SAVE_AUTH_CREDENTIALS, session }]
       )
     })
   })

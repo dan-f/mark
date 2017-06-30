@@ -1,8 +1,7 @@
-/* global fetch */
 import * as Immutable from 'immutable'
+import * as Auth from 'solid-auth-client'
 import urljoin from 'url-join'
 import uuid from 'uuid'
-import 'isomorphic-fetch'
 
 import * as ActionTypes from './actionTypes'
 import * as utils from './utils'
@@ -19,34 +18,40 @@ const PREFIX_CONTEXT = {
 
 // Authentication
 
-export const saveCredentials = ({ webId, key }) => ({
+export const login = idp => dispatch =>
+  Auth.login(idp)
+    .then(credentials => dispatch(saveCredentials(credentials)))
+
+export const currentSession = () => dispatch =>
+  Auth.currentSession()
+    .then(credentials => {
+      if (credentials.session) {
+        dispatch(saveCredentials(credentials))
+      }
+    })
+
+export const logout = () => dispatch =>
+  Auth.logout()
+    .then(() => dispatch(clearCredentials()))
+    .then(() => dispatch(clearProfile()))
+
+export const saveCredentials = ({ session }) => ({
   type: ActionTypes.MARK_SAVE_AUTH_CREDENTIALS,
-  webId,
-  key
+  session
 })
 
 export const clearCredentials = () => ({
   type: ActionTypes.MARK_CLEAR_AUTH_CREDENTIALS
 })
 
-export const saveLastIdp = lastIdp => ({
-  type: ActionTypes.MARK_SAVE_LAST_IDP,
-  lastIdp
-})
-
-export const logout = () => dispatch => {
-  dispatch(clearCredentials())
-  dispatch(clearProfile())
-}
-
 // Profile
 
 export const loadProfile = () => (dispatch, getState) => {
-  const { auth: { webId } } = getState()
+  const { auth } = getState()
   dispatch(loadProfileRequest())
   return dispatch(twinql(`
     @prefix foaf http://xmlns.com/foaf/0.1/
-    ${webId} {
+    ${auth.session.webId} {
       foaf:img
     }
   `)).then(response => {
@@ -81,10 +86,10 @@ export const loadProfileSuccess = profile => ({
 
 export function twinql (query) {
   return (dispatch, getState) => {
-    const { endpoints: { twinql }, auth: { key } } = getState()
-    return fetch(twinql, {
+    const { endpoints } = getState()
+    return Auth.fetch(endpoints.twinql, {
       method: 'POST',
-      headers: { 'content-type': 'text/plain', 'Authorization': `Bearer ${key}` },
+      headers: { 'content-type': 'text/plain' },
       body: query
     }).then(response => response.json())
   }
@@ -94,7 +99,7 @@ export function twinql (query) {
 
 export function findEndpoints (url) {
   return dispatch => {
-    return fetch(url, { method: 'OPTIONS' })
+    return Auth.fetch(url, { method: 'OPTIONS' })
       .then(utils.checkStatus)
       .then(response => {
         const linkHeaders = utils.parseLinkHeader(response.headers.get('link'))
@@ -140,12 +145,12 @@ export function maybeInstallAppResources () {
 
 export function getBookmarksContainer () {
   return (dispatch, getState) => {
-    const { auth: { webId } } = getState()
+    const { auth } = getState()
     return dispatch(twinql(`
       @prefix rdf   http://www.w3.org/1999/02/22-rdf-syntax-ns#
       @prefix solid ${PREFIX_CONTEXT.solid}
       @prefix book  http://www.w3.org/2002/01/bookmark#
-      ${webId} {
+      ${auth.session.webId} {
         solid:publicTypeIndex => ( rdf:type solid:TypeRegistration solid:forClass book:Bookmark ) {
           solid:instanceContainer
         }
@@ -169,11 +174,11 @@ export function getBookmarksContainer () {
 
 export function createBookmarksContainer () {
   return (dispatch, getState) => {
-    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    const { auth } = getState()
     dispatch(createBookmarksContainerRequest())
     return dispatch(twinql(`
       @prefix pim http://www.w3.org/ns/pim/space#
-      ${webId} { pim:storage }
+      ${auth.session.webId} { pim:storage }
     `)).then(response => {
       const error = response['@error']
       const storage = response['pim:storage']
@@ -186,12 +191,11 @@ export function createBookmarksContainer () {
       return storage
     }).then(storage => {
       const bookmarksContainer = utils.defaultBookmarksUrl(storage['@id'])
-      const proxiedContainerUrl = utils.proxyUrl(proxy, urljoin(bookmarksContainer, '.config'), key)
-      return fetch(proxiedContainerUrl, { method: 'HEAD' })
+      return Auth.fetch(bookmarksContainer, { method: 'HEAD' })
         .then(response =>
           response.status >= 200 && response.status < 300
             ? response
-            : fetch(proxiedContainerUrl, { method: 'PUT' }).then(utils.checkStatus)
+            : Auth.fetch(bookmarksContainer, { method: 'PUT' }).then(utils.checkStatus)
         )
         .then(() => bookmarksContainer)
     }).then(bookmarksContainer => {
@@ -221,10 +225,10 @@ export function createBookmarksContainerSuccess (bookmarksContainerUrl) {
 
 export function registerBookmarksContainer (bookmarksContainer) {
   return (dispatch, getState) => {
-    const { auth: { webId, key }, endpoints: { proxy } } = getState()
+    const { auth } = getState()
     return dispatch(twinql(`
       @prefix solid ${PREFIX_CONTEXT.solid}
-      ${webId} { solid:publicTypeIndex }
+      ${auth.session.webId} { solid:publicTypeIndex }
     `)).then(response => {
       const publicTypeIndex = response['solid:publicTypeIndex']['@id']
       const registrationId = uuid.v4()
@@ -234,7 +238,7 @@ export function registerBookmarksContainer (bookmarksContainer) {
         `<#${registrationId}> <${PREFIX_CONTEXT.solid}instanceContainer> <${bookmarksContainer}> .`
       ]
       dispatch(registerBookmarksRequest())
-      return utils.sparqlPatch(utils.proxyUrl(proxy, publicTypeIndex, key), [], registrationTriples)
+      return utils.sparqlPatch(publicTypeIndex, [], registrationTriples)
     }).then(() => {
       dispatch(registerBookmarksSuccess(bookmarksContainer))
       return bookmarksContainer
@@ -264,13 +268,12 @@ export function registerBookmarksSuccess (bookmarksUrl) {
 
 export function saveBookmark (original, updated, isNew) {
   return (dispatch, getState) => {
-    const { auth: { key }, endpoints: { proxy } } = getState()
     const grpahOf = node => node.split('#')[0]
     const [ url, toDel, toIns ] = isNew
       ? [ grpahOf(updated.get('@id')), [], utils.jsonLdToNT(updated, PREFIX_CONTEXT) ]
       : [ grpahOf(original.get('@id')), ...utils.diff(original, updated, PREFIX_CONTEXT) ]
     dispatch(saveBookmarkRequest())
-    return utils.sparqlPatch(utils.proxyUrl(proxy, url, key), isNew ? [] : toDel, toIns)
+    return utils.sparqlPatch(url, isNew ? [] : toDel, toIns)
       .then(() => dispatch(saveBookmarkSuccess(updated)))
       .catch(error => {
         const { message } = error

@@ -1,4 +1,3 @@
-import queryString from 'query-string'
 import React from 'react'
 import Loadable from 'react-loading-overlay'
 import { connect } from 'react-redux'
@@ -12,59 +11,33 @@ export class LoginContainer extends React.Component {
   state = {
     loggingIn: false,
     loginUiOpen: false,
-    loginServer: this.props.auth.lastIdp
+    loginServer: this.props.lastIdp
   }
 
-  onClickLogin = () => {
+  onClickLogin = () =>
     this.setState({ loginUiOpen: true })
-  }
 
-  onClickCancel = () => {
-    this.setState({ loginUiOpen: false, loginServer: this.props.auth.lastIdp })
-  }
+  onClickCancel = () =>
+    this.setState({ loginUiOpen: false, loginServer: this.props.lastIdp })
 
-  onChangeLoginServer = event => {
+  onChangeLoginServer = event =>
     this.setState({ loginServer: event.target.value })
-  }
 
   onSubmitLogin = event => {
     event.preventDefault()
-    this.redirectToIdpLogin()
+    this.loginAndShowBookmarks()
   }
 
-  redirectToIdpLogin = webId => {
-    const { findEndpoints, saveLastIdp } = this.props.actions
-    let loginServer = webId || this.state.loginServer.trim()
-    if (!loginServer) {
-      return
-    }
-    if (!/^http(s)?:\/\//.test(loginServer)) {
-      loginServer = `https://${loginServer}`
-    }
-    findEndpoints(loginServer)
-      .then(action => {
-        saveLastIdp(loginServer)
-        window.location.assign(
-          `${action.endpoints.login}?redirect=${window.location.href}&origin=${window.location.origin}`
-        )
-      })
-  }
+  loginAndShowBookmarks = () =>
+    this.props.actions.login(this.state.loginServer)
+      .then(this.showBookmarks)
 
-  componentDidMount () {
-    const { auth, history, location } = this.props
-    const { loadProfile, maybeInstallAppResources, saveCredentials } = this.props.actions
-    let { webid: webId, key } = queryString.parse(location.search)
-    if (!(webId && key)) {
-      webId = auth.webId
-      key = auth.key
-    }
-    if (webId && key) {
-      saveCredentials({ webId, key })
-    } else {
-      return
-    }
+  showBookmarks = () => {
+    const { history } = this.props
+    const { currentSession, loadProfile, maybeInstallAppResources } = this.props.actions
     this.setState({ loggingIn: true })
-    loadProfile()
+    return currentSession()
+      .then(loadProfile)
       .then(maybeInstallAppResources)
       .then(bookmarksContainer => {
         this.setState({ loggingIn: false })
@@ -73,9 +46,13 @@ export class LoginContainer extends React.Component {
       .catch(() => this.setState({ loggingIn: false }))
   }
 
+  componentDidMount () {
+    this.showBookmarks()
+  }
+
   render () {
     const { loginUiOpen, loggingIn, loginServer } = this.state
-    const { onClickLogin, onChangeLoginServer, onClickCancel, onSubmitLogin, redirectToIdpLogin } = this
+    const { loginAndShowBookmarks, onClickLogin, onChangeLoginServer, onClickCancel, onSubmitLogin } = this
     const props = {
       loginUiOpen,
       loginServer,
@@ -83,7 +60,7 @@ export class LoginContainer extends React.Component {
       onChangeLoginServer,
       onClickCancel,
       onSubmitLogin,
-      redirectToIdpLogin
+      loginAndShowBookmarks
     }
     return (
       <Loadable active={loggingIn} spinner background='#FFFFFF' color='#000'>
@@ -94,7 +71,7 @@ export class LoginContainer extends React.Component {
 }
 
 const mapStateToProps = state => ({
-  auth: state.auth
+  lastIdp: state.auth.lastIdp
 })
 
 const mapDispatchToProps = dispatch => ({
