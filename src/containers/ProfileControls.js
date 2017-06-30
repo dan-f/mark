@@ -34,14 +34,16 @@ class ProfileControls extends Component {
     const { handleClickDropdown, logout } = this
     return webId
       ? (
-        <Dropdown open={this.state.open} ariaLabel='Account actions'>
-          <button type='button' className='btn-link dropdown-toggle' onClick={handleClickDropdown}>
+        <Dropdown open={this.state.open} handleClickDropdown={handleClickDropdown}>
+          <button aria-label='Profile controls' type='button' className='btn-link dropdown-toggle' onClick={handleClickDropdown}>
             <img src={img} width='30' height='30' alt="User's profile image" />
           </button>
           <DropdownItem>
             <a href={`https://linkeddata.github.io/profile-editor/#/profile/view?webid=${encodeURIComponent(webId)}`} target='_blank' className='mx-1'>
               Edit Profile
             </a>
+          </DropdownItem>
+          <DropdownItem>
             <button type='button' className='btn btn-link' onClick={logout}>
               Log out
             </button>

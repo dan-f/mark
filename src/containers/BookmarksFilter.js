@@ -5,6 +5,7 @@ import { bindActionCreators } from 'redux'
 
 import * as BookmarkActions from '../actions'
 import BookmarksFilterControls from '../components/BookmarksFilterControls'
+import { buttonSelected } from '../utils'
 
 export class BookmarksFilter extends React.Component {
   constructor (props) {
@@ -32,7 +33,7 @@ export class BookmarksFilter extends React.Component {
 
   handleRemoveTag (tag) {
     return (event) => {
-      if (event.type === 'click' || event.key === ' ') {
+      if (buttonSelected(event)) {
         this.props.actions.removeFilterTag(tag)
       }
     }

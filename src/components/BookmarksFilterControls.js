@@ -14,18 +14,20 @@ const BookmarksFilterControls = ({
   handleTagFilterInput,
   handleShowArchived
 }) =>
-  <div>
+  <section aria-label='Bookmark filter controls'>
 
     <div className='row'>
       <div className='col-6'>
-        <form className='form-inline' onSubmit={event => event.preventDefault()}>
+        <form role='search' className='form-inline' onSubmit={event => event.preventDefault()}>
           <div className='form-group'>
-            <label className='sr-only' htmlFor='tag-filter-input'>Filter by tag</label>
-            <Dropdown open={tagFilterInput && matchingTags.size}>
-              <input type='text' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={tagFilterInput} autoComplete='off' onChange={handleTagFilterInput} />
+            <label className='sr-only' htmlFor='tag-filter-input'>Bookmark filter typeahead</label>
+            <Dropdown open={!!tagFilterInput && !!matchingTags.size}>
+              <input type='text' role='searchbox' aria-autocomplete='list' className='form-control' id='tag-filter-input' placeholder='Filter by tag' value={tagFilterInput} autoComplete='off' onChange={handleTagFilterInput} />
               {matchingTags.map(tag =>
                 <DropdownItem key={tag}>
-                  <button type='button' className='dropdown-item' onClick={handleSelectTag(tag)}>{tag}</button>
+                  <button aria-label={`Add ${tag} to active tags`} type='button' className='dropdown-item' onClick={handleSelectTag(tag)}>
+                    {tag}
+                  </button>
                 </DropdownItem>
               )}
             </Dropdown>
@@ -44,14 +46,14 @@ const BookmarksFilterControls = ({
       </div>
     </div>
 
-    <div className='row' style={{marginTop: '5px', marginBottom: '5px'}}>
-      <div className='col-12'>
-        {selectedTags.map(tag =>
-          <Tag key={tag} tag={tag} handleSelect={handleRemoveTag} />
-        )}
-      </div>
-    </div>
+    <section aria-label='Active tags' className='my-2'>
+      {selectedTags.map(tag =>
+        <Tag aria-label={`Remove ${tag} from active tags`} key={tag} tag={tag} handleSelect={handleRemoveTag}>
+          {tag} <i className='fa fa-times' aria-hidden='true' />
+        </Tag>
+      )}
+    </section>
 
-  </div>
+  </section>
 
 export default BookmarksFilterControls

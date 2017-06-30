@@ -1,11 +1,21 @@
-import React from 'react'
+import React, { cloneElement } from 'react'
+import uuid from 'uuid'
 
-const Dropdown = ({ children, open, ariaLabel }) =>
-  <div className={'dropdown' + (open ? ' show' : '')}>
-    {children[0]}
-    <div className='dropdown-menu' aria-label={ariaLabel}>
-      {children.slice(1)}
+const Dropdown = ({ children, open }) => {
+  const menuId = `dropdown-menu-${uuid.v4()}`
+  return (
+    <div className={'dropdown' + (open ? ' show' : '')}>
+      {cloneElement(children[0], {
+        'aria-label': children[0].props['aria-label'] || 'Dropdown toggle',
+        'aria-expanded': open,
+        'aria-controls': menuId,
+        'aria-haspopup': true
+      })}
+      <ul role='menu' id={menuId} className='dropdown-menu'>
+        {children.slice(1)}
+      </ul>
     </div>
-  </div>
+  )
+}
 
 export default Dropdown

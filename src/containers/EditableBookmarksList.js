@@ -4,6 +4,7 @@ import { bindActionCreators } from 'redux'
 
 import * as Actions from '../actions'
 import BookmarksList from '../components/BookmarksList'
+import { buttonSelected } from '../utils'
 
 export class EditableBookmarksList extends React.Component {
   constructor (props) {
@@ -41,10 +42,9 @@ export class EditableBookmarksList extends React.Component {
   handleSelectTag (tag) {
     const { actions } = this.props
     return event => {
-      if (event.type !== 'click' && !(event.type === 'keyup' && event.key === ' ')) {
-        return
+      if (buttonSelected(event)) {
+        actions.addFilterTag(tag)
       }
-      actions.addFilterTag(tag)
     }
   }
 
