@@ -103,7 +103,7 @@ describe('Actions', () => {
   })
 
   describe('logout', () => {
-    it('clears credentials and the profile after logging out', () => {
+    it('clears credentials, the profile, and alerts after logging out', () => {
       const { logout } = proxyquire('../src/actions', {
         'solid-auth-client': {
           logout: stub().returns(Promise.resolve())
@@ -113,12 +113,14 @@ describe('Actions', () => {
         .then(() => {
           expect(store.getActions()).to.eql([
             { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
-            { type: AT.MARK_CLEAR_PROFILE }
+            { type: AT.MARK_CLEAR_PROFILE },
+            { type: AT.MARK_ALERT_CLEAR, kind: 'danger' },
+            { type: AT.MARK_ALERT_CLEAR, kind: 'info' }
           ])
         })
     })
 
-    it('always clears credentials and the profile, even if Auth.logout fails', () => {
+    it('always clears credentials, the profile, and alerts, even if Auth.logout fails', () => {
       const error = new Error('Could not parse localStorage')
       const { logout } = proxyquire('../src/actions', {
         'solid-auth-client': {
@@ -129,7 +131,9 @@ describe('Actions', () => {
         .catch(() => {
           expect(store.getActions()).to.eql([
             { type: AT.MARK_CLEAR_AUTH_CREDENTIALS },
-            { type: AT.MARK_CLEAR_PROFILE }
+            { type: AT.MARK_CLEAR_PROFILE },
+            { type: AT.MARK_ALERT_CLEAR, kind: 'danger' },
+            { type: AT.MARK_ALERT_CLEAR, kind: 'info' }
           ])
         })
     })
