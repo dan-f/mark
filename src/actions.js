@@ -44,6 +44,8 @@ export const currentSession = () => dispatch =>
 export const logout = () => dispatch => {
   dispatch(clearCredentials())
   dispatch(clearProfile())
+  dispatch(clearError())
+  dispatch(clearInfo())
   return Auth.logout()
 }
 
